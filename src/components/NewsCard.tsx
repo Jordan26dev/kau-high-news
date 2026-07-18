@@ -1,5 +1,3 @@
-console.log("NewsCard file loaded");
-
 type NewsCardProps = {
   category: string;
   title: string;
@@ -12,20 +10,20 @@ export default function NewsCard({
   summary,
 }: NewsCardProps) {
   return (
-    <article className="rounded-2xl bg-white p-6 shadow-lg transition hover:-translate-y-1 hover:shadow-xl">
-      <span className="text-sm font-bold uppercase text-blue-700">
+    <article className="rounded-3xl bg-white p-8 shadow-xl transition hover:-translate-y-2 hover:shadow-2xl">
+      <p className="text-sm font-bold uppercase tracking-widest text-blue-700">
         {category}
-      </span>
+      </p>
 
-      <h3 className="mt-3 text-2xl font-bold">
+      <h2 className="mt-4 text-3xl font-bold text-slate-900">
         {title}
-      </h3>
+      </h2>
 
-      <p className="mt-3 text-gray-600">
+      <p className="mt-4 text-lg text-slate-600">
         {summary}
       </p>
 
-      <button className="mt-6 font-semibold text-blue-800 hover:underline">
+      <button className="mt-8 font-bold text-blue-700 hover:underline">
         Read More →
       </button>
     </article>
