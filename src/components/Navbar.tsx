@@ -1,16 +1,31 @@
+import Link from "next/link";
+
+const navItems = [
+  { label: "Home", href: "/" },
+  { label: "News", href: "/categories/News" },
+  { label: "Sports", href: "/categories/Sports" },
+  { label: "Clubs", href: "/categories/Clubs" },
+  { label: "Authors", href: "/authors/jordan-virgo" },
+  { label: "Dashboard", href: "/dashboard" },
+];
+
 export default function Navbar() {
   return (
-    <header className="bg-blue-900 text-white shadow-lg">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-        <h1 className="text-3xl font-bold">Kau High News</h1>
+    <header className="bg-slate-950 text-white shadow-lg">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-5 sm:flex-row sm:items-center sm:justify-between">
+        <Link href="/" className="text-2xl font-bold tracking-tight sm:text-3xl">
+          Kau High News
+        </Link>
 
         <nav>
-          <ul className="flex gap-6 font-medium">
-            <li>Home</li>
-            <li>News</li>
-            <li>Sports</li>
-            <li>Clubs</li>
-            <li>Opinion</li>
+          <ul className="flex flex-wrap gap-3 text-sm font-medium sm:gap-6 sm:text-base">
+            {navItems.map((item) => (
+              <li key={item.label}>
+                <Link href={item.href} className="transition hover:text-blue-300">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </nav>
       </div>

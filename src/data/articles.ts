@@ -1,4 +1,6 @@
-export const articles = [
+import type { Article } from "@/types/article";
+
+export const articles: Article[] = [
   {
     id: 1,
     slug: "football-team-wins-season-opener",
@@ -6,11 +8,11 @@ export const articles = [
     title: "Football Team Wins Season Opener",
     summary:
       "The Trojans opened the season with a strong victory in front of a packed home crowd.",
-
     author: "Jordan Virgo",
-
     date: "July 21, 2026",
-
+    readingTime: "4 min read",
+    image: "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1200&q=80",
+    tags: ["Football", "Victory", "Home Crowd"],
     content: `
 The Kau High football team opened the season with an impressive performance Friday night.
 
@@ -27,11 +29,11 @@ This is where the full article will eventually go.
     title: "Student Council Plans Spirit Week",
     summary:
       "Spirit Week will include dress-up days, lunchtime games, and a pep rally.",
-
     author: "Jordan Virgo",
-
     date: "July 21, 2026",
-
+    readingTime: "3 min read",
+    image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
+    tags: ["Student Council", "Spirit Week", "Events"],
     content: `
 Student Council announced this year's Spirit Week schedule.
 
@@ -46,11 +48,11 @@ Events will take place throughout the week and conclude with a school pep rally.
     title: "Robotics Team Qualifies for States",
     summary:
       "After an impressive regional competition, the Robotics Club advances to the state championship.",
-
     author: "Jordan Virgo",
-
     date: "July 21, 2026",
-
+    readingTime: "5 min read",
+    image: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80",
+    tags: ["Robotics", "Competition", "State Championship"],
     content: `
 The Robotics Club has earned a place at the state championship after another successful season.
 `,
