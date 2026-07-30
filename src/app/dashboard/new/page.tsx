@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const categories = ["News", "Sports", "Clubs"];
 
@@ -11,14 +11,6 @@ export default function NewDraftPage() {
   const [category, setCategory] = useState("News");
   const [content, setContent] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [draftCount, setDraftCount] = useState(0);
-
-  useEffect(() => {
-    const storedDrafts = window.sessionStorage.getItem("kau-high-drafts");
-    if (storedDrafts) {
-      setDraftCount(JSON.parse(storedDrafts).length);
-    }
-  }, []);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -36,7 +28,6 @@ export default function NewDraftPage() {
     const nextDrafts = [newDraft, ...drafts];
 
     window.sessionStorage.setItem("kau-high-drafts", JSON.stringify(nextDrafts));
-    setDraftCount(nextDrafts.length);
     setSubmitted(true);
     setTitle("");
     setSummary("");

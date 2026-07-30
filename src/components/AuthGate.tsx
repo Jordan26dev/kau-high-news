@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { users } from "@/data/users";
 
@@ -11,16 +11,15 @@ type AuthGateProps = {
 export default function AuthGate({ children }: AuthGateProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [user, setUser] = useState<(typeof users)[number] | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const storedUser = window.sessionStorage.getItem("kau-high-user");
-
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+  const [user, setUser] = useState<(typeof users)[number] | null>(() => {
+    if (typeof window === "undefined") {
+      return null;
     }
-  }, []);
+
+    const storedUser = window.sessionStorage.getItem("kau-high-user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+  const [error, setError] = useState("");
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();

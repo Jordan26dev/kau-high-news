@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import ArticleBody from "@/components/ArticleBody";
@@ -20,6 +21,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     return <div>Article not found.</div>;
   }
 
+  const currentIndex = articles.findIndex((item) => item.slug === article.slug);
+  const previousArticle = currentIndex > 0 ? articles[currentIndex - 1] : null;
+  const nextArticle = currentIndex < articles.length - 1 ? articles[currentIndex + 1] : null;
   const relatedArticles = articles.filter(
     (item) => item.slug !== article.slug && item.category === article.category
   );
@@ -27,21 +31,43 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
       <article className="overflow-hidden rounded-3xl bg-white shadow-xl">
-        <img src={article.image} alt={article.title} className="h-72 w-full object-cover" />
+        <div className="relative h-72 w-full">
+          <Image
+            src={article.image}
+            alt={article.title}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            unoptimized
+          />
+        </div>
 
         <div className="p-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
-          {article.category}
-        </p>
-        <h1 className="mt-3 text-4xl font-bold text-slate-900">{article.title}</h1>
-        <div className="mt-4">
-          <p className="text-sm text-slate-600">
-            Written by{" "}
-            <Link href={`/authors/${authors.find((author) => author.name === article.author)?.slug || ""}`} className="font-semibold text-blue-700 hover:underline">
-              {article.author}
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <Link
+              href={`/categories/${encodeURIComponent(article.category)}`}
+              className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700 hover:underline"
+            >
+              Back to {article.category}
             </Link>
+            <span className="text-sm text-slate-500">•</span>
+            <p className="text-sm text-slate-600">{article.date}</p>
+          </div>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
+            {article.category}
           </p>
-        </div>
+          <h1 className="mt-3 text-4xl font-bold text-slate-900">{article.title}</h1>
+          {article.subtitle ? (
+            <p className="mt-4 text-xl text-slate-700">{article.subtitle}</p>
+          ) : null}
+          <div className="mt-6">
+            <p className="text-sm text-slate-600">
+              Written by{" "}
+              <Link href={`/authors/${authors.find((author) => author.name === article.author)?.slug || ""}`} className="font-semibold text-blue-700 hover:underline">
+                {article.author}
+              </Link>
+            </p>
+          </div>
 
         <ArticleMeta
           author={article.author}
@@ -94,6 +120,49 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           </div>
         </section>
       )}
+
+      <section className="mx-auto mt-12 max-w-5xl space-y-8">
+        {(previousArticle || nextArticle) && (
+          <div className="grid gap-4 md:grid-cols-2">
+            {previousArticle ? (
+              <Link
+                href={`/news/${previousArticle.slug}`}
+                className="rounded-3xl border border-slate-200 bg-slate-50 p-6 transition hover:bg-slate-100"
+              >
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Previous story</p>
+                <h3 className="mt-2 text-xl font-semibold text-slate-900">{previousArticle.title}</h3>
+              </Link>
+            ) : null}
+
+            {nextArticle ? (
+              <Link
+                href={`/news/${nextArticle.slug}`}
+                className="rounded-3xl border border-slate-200 bg-slate-50 p-6 transition hover:bg-slate-100"
+              >
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Next story</p>
+                <h3 className="mt-2 text-xl font-semibold text-slate-900">{nextArticle.title}</h3>
+              </Link>
+            ) : null}
+          </div>
+        )}
+
+        {relatedArticles.length > 0 && (
+          <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <h2 className="text-2xl font-bold text-slate-900">Related Articles</h2>
+            <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {relatedArticles.map((relatedArticle) => (
+                <NewsCard
+                  key={relatedArticle.slug}
+                  category={relatedArticle.category}
+                  title={relatedArticle.title}
+                  summary={relatedArticle.summary}
+                  slug={relatedArticle.slug}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+      </section>
     </main>
   );
 }

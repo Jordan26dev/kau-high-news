@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 import AboutSection from "@/components/AboutSection";
-import Navbar from "@/components/Navbar";
+import BreakingNewsBanner from "@/components/BreakingNewsBanner";
 import Hero from "@/components/Hero";
 import FeaturedArticle from "@/components/FeaturedArticle";
 import CategoryFilters from "@/components/CategoryFilters";
@@ -11,9 +11,11 @@ import CategorySpotlight from "@/components/CategorySpotlight";
 import NewsCard from "@/components/NewsCard";
 import EditorNote from "@/components/EditorNote";
 import NewsletterCallout from "@/components/NewsletterCallout";
+import PhotoOfWeek from "@/components/PhotoOfWeek";
 import SearchBar from "@/components/SearchBar";
 import StaffSection from "@/components/StaffSection";
 import TopStories from "@/components/TopStories";
+import UpcomingEvents from "@/components/UpcomingEvents";
 
 import { articles } from "@/data/articles";
 
@@ -62,10 +64,12 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-100">
       <Hero />
+      <BreakingNewsBanner />
       <FeaturedArticle article={articles[0]} />
       <CategorySpotlight featuredCategories={featuredCategories} />
       <TopStories stories={articles.slice(0, 3)} />
-
+      <PhotoOfWeek />
+      <UpcomingEvents />
       <AboutSection />
       <StaffSection />
       <EditorNote />

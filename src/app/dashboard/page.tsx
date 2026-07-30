@@ -9,27 +9,32 @@ import { drafts as initialDrafts } from "@/data/drafts";
 import { pendingArticles as initialPendingArticles } from "@/data/pendingArticles";
 
 export default function DashboardPage() {
-  const [drafts, setDrafts] = useState(initialDrafts);
-  const [pendingArticles, setPendingArticles] = useState(initialPendingArticles);
-  const [publishedArticles, setPublishedArticles] = useState<string[]>([]);
+  const [drafts] = useState(() => {
+    if (typeof window === "undefined") {
+      return initialDrafts;
+    }
 
-  useEffect(() => {
     const storedDrafts = window.sessionStorage.getItem("kau-high-drafts");
+    return storedDrafts ? JSON.parse(storedDrafts) : initialDrafts;
+  });
+
+  const [pendingArticles, setPendingArticles] = useState(() => {
+    if (typeof window === "undefined") {
+      return initialPendingArticles;
+    }
+
     const storedPendingArticles = window.sessionStorage.getItem("kau-high-pending-articles");
+    return storedPendingArticles ? JSON.parse(storedPendingArticles) : initialPendingArticles;
+  });
+
+  const [publishedArticles, setPublishedArticles] = useState<string[]>(() => {
+    if (typeof window === "undefined") {
+      return [];
+    }
+
     const storedPublishedArticles = window.sessionStorage.getItem("kau-high-published-articles");
-
-    if (storedDrafts) {
-      setDrafts(JSON.parse(storedDrafts));
-    }
-
-    if (storedPendingArticles) {
-      setPendingArticles(JSON.parse(storedPendingArticles));
-    }
-
-    if (storedPublishedArticles) {
-      setPublishedArticles(JSON.parse(storedPublishedArticles));
-    }
-  }, []);
+    return storedPublishedArticles ? JSON.parse(storedPublishedArticles) : [];
+  });
 
   useEffect(() => {
     window.sessionStorage.setItem("kau-high-drafts", JSON.stringify(drafts));
@@ -82,7 +87,7 @@ export default function DashboardPage() {
         count: publishedArticles.length,
       },
     ],
-    [pendingArticles.length, publishedArticles.length]
+    [drafts.length, pendingArticles.length, publishedArticles.length]
   );
 
   return (

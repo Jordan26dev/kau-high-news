@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 type FeaturedArticleProps = {
@@ -47,11 +48,14 @@ export default function FeaturedArticle({ article }: FeaturedArticleProps) {
             </div>
           </div>
 
-          <div className="h-full min-h-[280px]">
-            <img
+          <div className="relative h-full min-h-[280px] w-full">
+            <Image
               src={article.image}
               alt={article.title}
-              className="h-full w-full object-cover"
+              fill
+              sizes="(min-width: 1024px) 40vw, 100vw"
+              className="object-cover"
+              unoptimized
             />
           </div>
         </div>
