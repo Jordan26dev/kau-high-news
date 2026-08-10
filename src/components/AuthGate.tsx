@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
-import { users } from "@/data/users";
+import { useEffect, useMemo, useState } from "react";
+import supabase from "@/lib/supabaseClient";
 
 type AuthGateProps = {
   children: React.ReactNode;
@@ -11,41 +10,74 @@ type AuthGateProps = {
 export default function AuthGate({ children }: AuthGateProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [user, setUser] = useState<(typeof users)[number] | null>(() => {
-    if (typeof window === "undefined") {
-      return null;
+  const [user, setUser] = useState<any | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadUser() {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (!mounted) return;
+        setUser(data.user ?? null);
+      } catch (e) {
+        // ignore
+      }
     }
 
-    const storedUser = window.sessionStorage.getItem("kau-high-user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
-  const [error, setError] = useState("");
+    loadUser();
 
-  const handleLogin = (event: React.FormEvent) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      mounted = false;
+      // unsubscribe
+      // `subscription` is undefined in some environments; guard defensively
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(subscription as any)?.subscription?.unsubscribe?.();
+    };
+  }, []);
+
+  const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
+    setLoading(true);
+    setError("");
 
-    const matchedUser = users.find(
-      (candidate) =>
-        candidate.email === email.trim().toLowerCase() &&
-        candidate.password === password
-    );
+    const trimmed = email.trim().toLowerCase();
 
-    if (!matchedUser) {
-      setError("Invalid email or password.");
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: trimmed,
+      password,
+    });
+
+    setLoading(false);
+
+    if (signInError) {
+      setError(signInError.message);
       return;
     }
 
-    setUser(matchedUser);
-    window.sessionStorage.setItem("kau-high-user", JSON.stringify(matchedUser));
+    setUser(data.user ?? null);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
     setError("");
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({ provider: "google" });
+    setLoading(false);
+    if (oauthError) setError(oauthError.message);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    window.sessionStorage.removeItem("kau-high-user");
   };
 
-  const roleLabel = useMemo(() => user?.role || "Guest", [user]);
+  const roleLabel = useMemo(() => (user?.role ? String(user.role) : "Guest"), [user]);
 
   if (user) {
     return (
@@ -56,7 +88,7 @@ export default function AuthGate({ children }: AuthGateProps) {
               <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
                 Signed in as {roleLabel}
               </p>
-              <p className="text-sm text-slate-600">{user.name}</p>
+              <p className="text-sm text-slate-600">{user.email}</p>
             </div>
             <button
               type="button"
@@ -80,7 +112,7 @@ export default function AuthGate({ children }: AuthGateProps) {
         </p>
         <h1 className="mt-3 text-3xl font-bold text-slate-900">Sign in to continue</h1>
         <p className="mt-3 text-sm leading-7 text-slate-600">
-          Use editor@kauhigh.edu, admin@kauhigh.edu, or writer@kauhigh.edu with the password password123.
+          Sign in with your Supabase account (email/password).
         </p>
 
         <form onSubmit={handleLogin} className="mt-8 space-y-4">
@@ -107,10 +139,21 @@ export default function AuthGate({ children }: AuthGateProps) {
 
           <button
             type="submit"
-            className="w-full rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+            disabled={loading}
+            className="w-full rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
           >
-            Sign in
+            {loading ? "Signing in..." : "Sign in"}
           </button>
+
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="w-full rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800"
+            >
+              Sign in with Google
+            </button>
+          </div>
         </form>
       </div>
     </div>
