@@ -6,7 +6,6 @@ const navItems = [
   { label: "Sports", href: "/categories/Sports" },
   { label: "Clubs", href: "/categories/Clubs" },
   { label: "Authors", href: "/authors/jordan-virgo" },
-  { label: "Dashboard", href: "/dashboard" },
 ];
 
 export default function Navbar() {

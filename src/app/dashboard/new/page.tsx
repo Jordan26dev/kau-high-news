@@ -3,14 +3,21 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { useAuth } from "@/components/AuthContext";
+import { editors } from "@/data/editors";
+
 const categories = ["News", "Sports", "Clubs"];
 
 export default function NewDraftPage() {
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [category, setCategory] = useState("News");
   const [content, setContent] = useState("");
+  const [selectedEditorId, setSelectedEditorId] = useState(editors[0]?.id ?? null);
   const [submitted, setSubmitted] = useState(false);
+
+  const selectedEditor = editors.find((editor) => editor.id === selectedEditorId) ?? editors[0];
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -18,8 +25,12 @@ export default function NewDraftPage() {
     const newDraft = {
       id: Date.now(),
       title,
+      summary,
+      category,
+      content,
       status: "Draft",
-      author: "You",
+      author: user?.name || "You",
+      editor: selectedEditor?.name || "Unassigned",
       updatedAt: "Just now",
     };
 
@@ -33,6 +44,7 @@ export default function NewDraftPage() {
     setSummary("");
     setContent("");
     setCategory("News");
+    setSelectedEditorId(editors[0]?.id ?? null);
   };
 
   return (
@@ -96,6 +108,30 @@ export default function NewDraftPage() {
             placeholder="Write the full article"
           />
         </label>
+
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <div>
+            <p className="text-sm font-semibold text-slate-700">Assign an editor</p>
+            <select
+              value={selectedEditorId ?? undefined}
+              onChange={(event) => setSelectedEditorId(Number(event.target.value))}
+              className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-700"
+            >
+              {editors.map((editor) => (
+                <option key={editor.id} value={editor.id}>
+                  {editor.name} ({editor.tasks} tasks)
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-700">Editor workload</p>
+            <p className="mt-3 text-sm text-slate-600">
+              {selectedEditor?.name} currently has {selectedEditor?.tasks} assigned task{selectedEditor?.tasks === 1 ? "" : "s"}.
+            </p>
+          </div>
+        </div>
 
         <div className="mt-8 flex flex-wrap gap-3">
           <button

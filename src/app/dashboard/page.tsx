@@ -4,12 +4,29 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import AuthGate from "@/components/AuthGate";
+import { useAuth } from "@/components/AuthContext";
 import ReviewActions from "@/components/ReviewActions";
 import { drafts as initialDrafts } from "@/data/drafts";
 import { pendingArticles as initialPendingArticles } from "@/data/pendingArticles";
 
+type Draft = {
+  id: number;
+  title: string;
+  status: string;
+  author: string;
+  updatedAt: string;
+};
+
+type PendingArticle = {
+  id: number;
+  title: string;
+  author: string;
+  status: string;
+  category: string;
+};
+
 export default function DashboardPage() {
-  const [drafts] = useState(() => {
+  const [drafts] = useState<Draft[]>(() => {
     if (typeof window === "undefined") {
       return initialDrafts;
     }
@@ -18,7 +35,7 @@ export default function DashboardPage() {
     return storedDrafts ? JSON.parse(storedDrafts) : initialDrafts;
   });
 
-  const [pendingArticles, setPendingArticles] = useState(() => {
+  const [pendingArticles, setPendingArticles] = useState<PendingArticle[]>(() => {
     if (typeof window === "undefined") {
       return initialPendingArticles;
     }
@@ -49,25 +66,31 @@ export default function DashboardPage() {
   }, [publishedArticles]);
 
   const handleApprove = (id: number) => {
-    const approvedArticle = pendingArticles.find((article) => article.id === id);
+    const approvedArticle = pendingArticles.find((article: PendingArticle) => article.id === id);
 
     if (!approvedArticle) {
       return;
     }
 
-    setPendingArticles((currentArticles) =>
-      currentArticles.filter((article) => article.id !== id)
+    setPendingArticles((currentArticles: PendingArticle[]) =>
+      currentArticles.filter((article: PendingArticle) => article.id !== id)
     );
     setPublishedArticles((currentArticles) => [approvedArticle.title, ...currentArticles]);
   };
 
   const handleRequestRevision = (id: number) => {
-    setPendingArticles((currentArticles) =>
-      currentArticles.map((article) =>
+    setPendingArticles((currentArticles: PendingArticle[]) =>
+      currentArticles.map((article: PendingArticle) =>
         article.id === id ? { ...article, status: "Needs Revision" } : article
       )
     );
   };
+
+  const { user } = useAuth();
+
+  const isReviewer = user?.role === "Teacher" || user?.role === "Editor" || user?.role === "Administrator";
+  const isAdmin = user?.role === "Administrator";
+  const isWriter = user?.role === "Writer";
 
   const dashboardSections = useMemo(
     () => [
@@ -78,7 +101,7 @@ export default function DashboardPage() {
       },
       {
         title: "Pending Review",
-        description: "Track stories waiting for teacher approval.",
+        description: "Track stories waiting for review.",
         count: pendingArticles.length,
       },
       {
@@ -99,9 +122,25 @@ export default function DashboardPage() {
         </p>
         <h1 className="mt-3 text-4xl font-bold text-slate-900">Editor dashboard</h1>
         <p className="mt-3 text-lg text-slate-600">
-          A simple workspace for managing upcoming stories, approvals, and published content.
+          A role-aware workspace for managing stories, approvals, and editorial assignments.
+        </p>
+        <p className="mt-3 text-sm text-slate-600">
+          {isAdmin
+            ? "You have full site permissions."
+            : isReviewer
+            ? "Reviewers can approve or request revisions on pending articles."
+            : isWriter
+            ? "Writers can submit drafts and see assigned editors."
+            : "Use your account to access the newsroom."}
         </p>
       </div>
+
+      {isAdmin ? (
+        <div className="mt-6 rounded-3xl border border-blue-200 bg-blue-50 p-6 text-sm text-blue-900">
+          <p className="font-semibold">Admin controls</p>
+          <p className="mt-2">Admins can manage content, approve editor requests, and oversee site workflow.</p>
+        </div>
+      ) : null}
 
       <div className="mt-8 grid gap-6 md:grid-cols-3">
         {dashboardSections.map((section) => (
@@ -116,16 +155,25 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-6">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-semibold text-slate-900">Draft queue</h2>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/dashboard/new" className="rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white">
-              New draft
-            </Link>
-            <Link href="/" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
-              View latest stories
-            </Link>
-          </div>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold text-slate-900">Draft queue</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                {isWriter
+                  ? "Create and manage your drafts before submitting them for review."
+                  : "Review drafts and help writers refine their stories."}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {isWriter ? (
+                <Link href="/dashboard/new" className="rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white">
+                  New draft
+                </Link>
+              ) : null}
+              <Link href="/" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+                View latest stories
+              </Link>
+            </div>
         </div>
 
         <div className="mt-6 space-y-3">

@@ -13,7 +13,7 @@ export default function Footer() {
             Latest stories
           </Link>
           <Link href="/dashboard" className="font-semibold text-slate-900 hover:text-blue-700">
-            Dashboard
+            Staff sign in
           </Link>
           <Link href="/authors/jordan-virgo" className="font-semibold text-slate-900 hover:text-blue-700">
             Staff

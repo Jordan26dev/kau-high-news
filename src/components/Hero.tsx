@@ -25,12 +25,6 @@ export default function Hero() {
               Explore stories
             </Link>
             <Link
-              href="/dashboard"
-              className="rounded-full border border-white/30 px-6 py-3 font-bold text-white transition hover:bg-white/10"
-            >
-              Open newsroom dashboard
-            </Link>
-            <Link
               href="/authors/jordan-virgo"
               className="rounded-full border border-white/30 px-6 py-3 font-bold text-white transition hover:bg-white/10"
             >
