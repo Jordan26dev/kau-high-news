@@ -30,7 +30,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
-      <article className="overflow-hidden rounded-3xl bg-white shadow-xl">
+      <article className="overflow-hidden border-y-2 border-[#5b1212] bg-white">
         <div className="relative h-72 w-full">
           <Image
             src={article.image}
@@ -56,7 +56,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
             {article.category}
           </p>
-          <h1 className="mt-3 text-4xl font-bold text-slate-900">{article.title}</h1>
+          <h1 className="mt-3 font-serif text-4xl font-bold text-slate-900">{article.title}</h1>
           {article.subtitle ? (
             <p className="mt-4 text-xl text-slate-700">{article.subtitle}</p>
           ) : null}
@@ -88,7 +88,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           ))}
         </div>
 
-        <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+        <div className="mt-8 border-y border-slate-200 bg-slate-50 p-6">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">
             In this story
           </p>
@@ -127,7 +127,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             {previousArticle ? (
               <Link
                 href={`/news/${previousArticle.slug}`}
-                className="rounded-3xl border border-slate-200 bg-slate-50 p-6 transition hover:bg-slate-100"
+                className="border-t-2 border-[#5b1212] bg-slate-50 p-6 transition hover:bg-slate-100"
               >
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Previous story</p>
                 <h3 className="mt-2 text-xl font-semibold text-slate-900">{previousArticle.title}</h3>
@@ -137,7 +137,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             {nextArticle ? (
               <Link
                 href={`/news/${nextArticle.slug}`}
-                className="rounded-3xl border border-slate-200 bg-slate-50 p-6 transition hover:bg-slate-100"
+                className="border-t-2 border-[#5b1212] bg-slate-50 p-6 transition hover:bg-slate-100"
               >
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Next story</p>
                 <h3 className="mt-2 text-xl font-semibold text-slate-900">{nextArticle.title}</h3>
@@ -147,7 +147,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         )}
 
         {relatedArticles.length > 0 && (
-          <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <section className="border-y border-slate-200 bg-white p-8">
             <h2 className="text-2xl font-bold text-slate-900">Related Articles</h2>
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {relatedArticles.map((relatedArticle) => (

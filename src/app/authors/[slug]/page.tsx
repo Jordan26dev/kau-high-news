@@ -21,11 +21,11 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-16">
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="border-y-2 border-[#5b1212] bg-white p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
           Author profile
         </p>
-        <h1 className="mt-3 text-4xl font-bold text-slate-900">{author.name}</h1>
+        <h1 className="mt-3 font-serif text-4xl font-bold text-slate-900">{author.name}</h1>
         <p className="mt-2 text-lg text-slate-600">{author.role}</p>
         <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-700">{author.bio}</p>
         <p className="mt-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -37,7 +37,7 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
         <h2 className="text-2xl font-bold text-slate-900">Stories by {author.name}</h2>
         <div className="mt-6 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {authoredArticles.map((article) => (
-            <article key={article.slug} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <article key={article.slug} className="border-t-2 border-[#5b1212] bg-white p-6">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">
                 {article.category}
               </p>

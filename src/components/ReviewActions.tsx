@@ -12,7 +12,7 @@ export default function ReviewActions({ articleId, onApprove, onRequestRevision 
       <button
         type="button"
         onClick={() => onApprove(articleId)}
-        className="rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white"
+        className="rounded-full bg-amber-700 px-4 py-2 text-sm font-semibold text-white"
       >
         Approve
       </button>

@@ -14,9 +14,11 @@ export default function NewDraftPage() {
   const [summary, setSummary] = useState("");
   const [category, setCategory] = useState("News");
   const [content, setContent] = useState("");
+  const [pdfName, setPdfName] = useState("");
   const [selectedEditorId, setSelectedEditorId] = useState(editors[0]?.id ?? null);
   const [submitted, setSubmitted] = useState(false);
 
+  const isAdmin = user?.role === "Administrator";
   const selectedEditor = editors.find((editor) => editor.id === selectedEditorId) ?? editors[0];
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -28,22 +30,33 @@ export default function NewDraftPage() {
       summary,
       category,
       content,
-      status: "Draft",
+      pdfName: pdfName || undefined,
+      status: isAdmin ? "Published" : "Draft",
       author: user?.name || "You",
       editor: selectedEditor?.name || "Unassigned",
       updatedAt: "Just now",
     };
 
-    const existingDrafts = window.sessionStorage.getItem("kau-high-drafts");
-    const drafts = existingDrafts ? JSON.parse(existingDrafts) : [];
-    const nextDrafts = [newDraft, ...drafts];
+    if (isAdmin) {
+      const storedPublishedArticles = window.sessionStorage.getItem("kau-high-published-articles");
+      const publishedArticles = storedPublishedArticles ? JSON.parse(storedPublishedArticles) : [];
+      window.sessionStorage.setItem(
+        "kau-high-published-articles",
+        JSON.stringify([newDraft.title, ...publishedArticles])
+      );
+    } else {
+      const existingDrafts = window.sessionStorage.getItem("kau-high-drafts");
+      const drafts = existingDrafts ? JSON.parse(existingDrafts) : [];
+      const nextDrafts = [newDraft, ...drafts];
+      window.sessionStorage.setItem("kau-high-drafts", JSON.stringify(nextDrafts));
+    }
 
-    window.sessionStorage.setItem("kau-high-drafts", JSON.stringify(nextDrafts));
     setSubmitted(true);
     setTitle("");
     setSummary("");
     setContent("");
     setCategory("News");
+    setPdfName("");
     setSelectedEditorId(editors[0]?.id ?? null);
   };
 
@@ -51,12 +64,12 @@ export default function NewDraftPage() {
     <main className="mx-auto max-w-5xl px-6 py-16">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-amber-700">
             New draft
           </p>
           <h1 className="mt-2 text-3xl font-bold text-slate-900">Create a new story</h1>
         </div>
-        <Link href="/dashboard" className="text-sm font-semibold text-blue-700 hover:underline">
+        <Link href="/dashboard" className="text-sm font-semibold text-amber-700 hover:underline">
           Back to dashboard
         </Link>
       </div>
@@ -68,7 +81,7 @@ export default function NewDraftPage() {
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-700"
+              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-amber-700"
               placeholder="Story title"
             />
           </label>
@@ -78,7 +91,7 @@ export default function NewDraftPage() {
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-700"
+              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-amber-700"
             >
               {categories.map((item) => (
                 <option key={item} value={item}>
@@ -94,7 +107,7 @@ export default function NewDraftPage() {
           <textarea
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
-            className="mt-2 min-h-24 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-700"
+            className="mt-2 min-h-24 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-amber-700"
             placeholder="Short summary"
           />
         </label>
@@ -104,9 +117,24 @@ export default function NewDraftPage() {
           <textarea
             value={content}
             onChange={(event) => setContent(event.target.value)}
-            className="mt-2 min-h-60 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-700"
+            className="mt-2 min-h-60 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-amber-700"
             placeholder="Write the full article"
           />
+        </label>
+
+        <label className="mt-6 block text-sm font-semibold text-slate-700">
+          Upload PDF
+          <input
+            type="file"
+            accept="application/pdf"
+            onChange={(event) => setPdfName(event.target.files?.[0]?.name ?? "")}
+            className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none"
+          />
+          {pdfName ? (
+            <p className="mt-2 text-sm text-amber-700">Selected file: {pdfName}</p>
+          ) : (
+            <p className="mt-2 text-sm text-slate-500">PDFs make articles easier to review and publish.</p>
+          )}
         </label>
 
         <div className="mt-6 grid gap-6 md:grid-cols-2">
@@ -115,7 +143,7 @@ export default function NewDraftPage() {
             <select
               value={selectedEditorId ?? undefined}
               onChange={(event) => setSelectedEditorId(Number(event.target.value))}
-              className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-700"
+              className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-amber-700"
             >
               {editors.map((editor) => (
                 <option key={editor.id} value={editor.id}>
@@ -136,9 +164,9 @@ export default function NewDraftPage() {
         <div className="mt-8 flex flex-wrap gap-3">
           <button
             type="submit"
-            className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white"
+            className="rounded-full bg-amber-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-amber-600"
           >
-            Submit for review
+            {isAdmin ? "Publish now" : "Submit for review"}
           </button>
           <Link href="/dashboard" className="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700">
             Cancel

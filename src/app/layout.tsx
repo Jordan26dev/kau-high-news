@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
+import PageTransition from "@/components/PageTransition";
 import { AuthStateProvider } from "@/components/AuthContext";
 import "./globals.css";
 
@@ -33,6 +34,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex min-h-screen flex-col">
         <AuthStateProvider>
+          <PageTransition />
           <Navbar />
           {children}
           <Footer />

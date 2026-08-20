@@ -12,13 +12,13 @@ const staff = [
 export default function StaffSection() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-16">
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="border-y border-slate-200 bg-white p-8">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
               Meet the staff
             </p>
-            <h3 className="mt-2 text-3xl font-bold text-slate-900">
+            <h3 className="mt-2 font-serif text-3xl font-bold text-slate-900">
               The voices behind Kau High News
             </h3>
           </div>
@@ -29,7 +29,7 @@ export default function StaffSection() {
 
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {staff.map((person) => (
-            <div key={person.name} className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+            <div key={person.name} className="border-t-2 border-[#7f1919] bg-slate-50 p-6">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
                 {person.role}
               </p>

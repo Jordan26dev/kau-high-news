@@ -24,13 +24,13 @@ const events = [
 export default function UpcomingEvents() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-16">
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="border-y border-slate-200 bg-white p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
               Upcoming events
             </p>
-            <h3 className="mt-2 text-3xl font-bold text-slate-900">What’s happening at Kau High</h3>
+            <h3 className="mt-2 font-serif text-3xl font-bold text-slate-900">What’s happening at Kau High</h3>
           </div>
           <p className="max-w-xl text-slate-600">
             Keep up with the key campus events that matter for students, families, and the broader community.
@@ -39,7 +39,7 @@ export default function UpcomingEvents() {
 
         <div className="mt-8 grid gap-4 lg:grid-cols-3">
           {events.map((event) => (
-            <article key={event.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+            <article key={event.title} className="border-t-2 border-[#5b1212] bg-slate-50 p-6">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">
                 {event.date}
               </p>

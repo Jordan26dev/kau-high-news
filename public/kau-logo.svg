@@ -1,0 +1,23 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <path id="topTextPath" d="M 20 35 A 40 40 0 0 1 100 35" />
+    <path id="bottomTextPath" d="M 100 85 A 40 40 0 0 1 20 85" />
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="#5b1212" stroke="#d4af37" stroke-width="4" />
+  <circle cx="60" cy="60" r="47" fill="#f3e6cc" />
+  <circle cx="60" cy="60" r="42" fill="none" stroke="#d4af37" stroke-width="2" />
+  <text font-family="Georgia, serif" font-size="10" letter-spacing="0.2em" fill="#f2dda8">
+    <textPath xlink:href="#topTextPath" startOffset="50%" text-anchor="middle">
+      Kau High &amp; Pāhala Elementary
+    </textPath>
+  </text>
+  <text font-family="Georgia, serif" font-size="8" letter-spacing="0.14em" fill="#f2dda8">
+    <textPath xlink:href="#bottomTextPath" startOffset="50%" text-anchor="middle">
+      Est. 1881 • Ka ʻIʻo Kūpaʻa
+    </textPath>
+  </text>
+  <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" font-family="Georgia, serif" font-size="36" fill="#5b1212" font-weight="700">KAU</text>
+  <text x="50%" y="68%" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="8" fill="#5b1212" letter-spacing="0.12em">
+    Kau High &amp; Pāhala
+  </text>
+</svg>

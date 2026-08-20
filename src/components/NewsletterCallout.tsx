@@ -1,13 +1,13 @@
 export default function NewsletterCallout() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-8">
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="border-y-2 border-[#5b1212] bg-white p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
               Stay in the loop
             </p>
-            <h3 className="mt-2 text-3xl font-bold text-slate-900">
+            <h3 className="mt-2 font-serif text-3xl font-bold text-slate-900">
               Get the next issue delivered to your inbox.
             </h3>
             <p className="mt-3 max-w-2xl text-lg text-slate-600">

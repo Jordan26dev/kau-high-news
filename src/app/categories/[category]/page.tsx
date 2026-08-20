@@ -17,11 +17,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-16">
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="border-y-2 border-[#5b1212] bg-white p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
           Section
         </p>
-        <h1 className="mt-3 text-4xl font-bold text-slate-900">{decodedCategory}</h1>
+        <h1 className="mt-3 font-serif text-4xl font-bold text-slate-900">{decodedCategory}</h1>
         <p className="mt-3 text-lg text-slate-600">
           Browse all stories currently published in this section.
         </p>
@@ -29,7 +29,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
       <div className="mt-8 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {categoryArticles.map((article) => (
-          <article key={article.slug} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <article key={article.slug} className="border-t-2 border-[#5b1212] bg-white p-6">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">
               {article.category}
             </p>

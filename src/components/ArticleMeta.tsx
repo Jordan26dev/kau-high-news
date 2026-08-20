@@ -63,7 +63,7 @@ export default function ArticleMeta({
   };
 
   return (
-    <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-4 flex flex-col gap-3 border-y border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p>
           By {author} • {date}

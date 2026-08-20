@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -8,6 +9,9 @@ import { useAuth } from "@/components/AuthContext";
 import ReviewActions from "@/components/ReviewActions";
 import { drafts as initialDrafts } from "@/data/drafts";
 import { pendingArticles as initialPendingArticles } from "@/data/pendingArticles";
+import { users as accountUsers } from "@/data/users";
+import { articles } from "@/data/articles";
+import siteSettings from "@/lib/siteSettings";
 
 type Draft = {
   id: number;
@@ -15,6 +19,7 @@ type Draft = {
   status: string;
   author: string;
   updatedAt: string;
+  pdfName?: string;
 };
 
 type PendingArticle = {
@@ -23,10 +28,11 @@ type PendingArticle = {
   author: string;
   status: string;
   category: string;
+  pdfName?: string;
 };
 
 export default function DashboardPage() {
-  const [drafts] = useState<Draft[]>(() => {
+  const [drafts, setDrafts] = useState<Draft[]>(() => {
     if (typeof window === "undefined") {
       return initialDrafts;
     }
@@ -53,17 +59,57 @@ export default function DashboardPage() {
     return storedPublishedArticles ? JSON.parse(storedPublishedArticles) : [];
   });
 
+  const [contentOrder, setContentOrder] = useState<string[]>(() => {
+    const defaultOrder = ["Top stories", "Photo of the week", "Upcoming events"];
+    if (typeof window === "undefined") {
+      return defaultOrder;
+    }
+    const storedOrder = window.localStorage.getItem("kau-high-content-order");
+    return storedOrder ? JSON.parse(storedOrder) : defaultOrder;
+  });
+
+  const [sectionVisibility, setSectionVisibility] = useState<Record<string, boolean>>(() => {
+    const defaultVisibility = {
+      "Top stories": true,
+      "Photo of the week": true,
+      "Upcoming events": true,
+    };
+    if (typeof window === "undefined") {
+      return defaultVisibility;
+    }
+    const storedVisibility = window.localStorage.getItem("kau-high-section-visibility");
+    return storedVisibility ? JSON.parse(storedVisibility) : defaultVisibility;
+  });
+
   useEffect(() => {
-    window.sessionStorage.setItem("kau-high-drafts", JSON.stringify(drafts));
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("kau-high-drafts", JSON.stringify(drafts));
+    }
   }, [drafts]);
 
   useEffect(() => {
-    window.sessionStorage.setItem("kau-high-pending-articles", JSON.stringify(pendingArticles));
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("kau-high-pending-articles", JSON.stringify(pendingArticles));
+    }
   }, [pendingArticles]);
 
   useEffect(() => {
-    window.sessionStorage.setItem("kau-high-published-articles", JSON.stringify(publishedArticles));
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("kau-high-published-articles", JSON.stringify(publishedArticles));
+    }
   }, [publishedArticles]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("kau-high-content-order", JSON.stringify(contentOrder));
+    }
+  }, [contentOrder]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("kau-high-section-visibility", JSON.stringify(sectionVisibility));
+    }
+  }, [sectionVisibility]);
 
   const handleApprove = (id: number) => {
     const approvedArticle = pendingArticles.find((article: PendingArticle) => article.id === id);
@@ -86,11 +132,102 @@ export default function DashboardPage() {
     );
   };
 
+  const moveSection = (index: number, direction: -1 | 1) => {
+    setContentOrder((currentOrder) => {
+      const updated = [...currentOrder];
+      const [item] = updated.splice(index, 1);
+      updated.splice(index + direction, 0, item);
+      return updated;
+    });
+  };
+
+  const toggleSection = (section: string) => {
+    setSectionVisibility((currentVisibility) => ({
+      ...currentVisibility,
+      [section]: !currentVisibility[section],
+    }));
+  };
+
   const { user } = useAuth();
+
+  const [accounts, setAccounts] = useState(() => {
+    if (typeof window === "undefined") return accountUsers;
+    const stored = window.localStorage.getItem("kau-high-accounts");
+    return stored ? JSON.parse(stored) : accountUsers;
+  });
+
+  const [underDevelopment, setUnderDevelopment] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("kau-high-under-development") === "true";
+  });
+
+  const [featuredSlug, setFeaturedSlug] = useState(() => {
+    if (typeof window === "undefined") return articles[0]?.slug ?? "";
+    return window.localStorage.getItem("kau-high-featured-slug") ?? articles[0]?.slug ?? "";
+  });
+
+  // Persist accounts, dev mode and featured slug
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("kau-high-accounts", JSON.stringify(accounts));
+    }
+  }, [accounts]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("kau-high-under-development", String(underDevelopment));
+    }
+  }, [underDevelopment]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("kau-high-featured-slug", featuredSlug);
+    }
+  }, [featuredSlug]);
+
+  const [featuredImage, setFeaturedImage] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem("kau-high-featured-image") ?? "";
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("kau-high-featured-image", featuredImage);
+    }
+  }, [featuredImage]);
+
+  // load settings from Supabase (or fallback) on first render
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const dev = await siteSettings.getUnderDevelopment();
+        const featured = await siteSettings.getFeatured();
+        if (!mounted) return;
+        if (dev !== null && dev !== undefined) setUnderDevelopment(Boolean(dev));
+        if (featured?.slug) setFeaturedSlug(featured.slug as string);
+        if (featured?.image) setFeaturedImage(featured.image as string);
+      } catch (e) {
+        // ignore; fallbacks already read from localStorage
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const isReviewer = user?.role === "Teacher" || user?.role === "Editor" || user?.role === "Administrator";
   const isAdmin = user?.role === "Administrator";
   const isWriter = user?.role === "Writer";
+  const canCreateDraft = isWriter || isAdmin;
+  const dashboardRoleLabel = isAdmin
+    ? "Administrator workspace"
+    : isReviewer
+    ? "Editorial workspace"
+    : isWriter
+    ? "Writer workspace"
+    : "Staff workspace";
+  const dashboardTitle = isAdmin ? "Admin dashboard" : isReviewer ? "Editorial dashboard" : "Writer dashboard";
 
   const dashboardSections = useMemo(
     () => [
@@ -116,31 +253,123 @@ export default function DashboardPage() {
   return (
     <AuthGate>
       <main className="mx-auto max-w-6xl px-6 py-16">
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
-          Staff dashboard
+      <div className="border-y-2 border-[#7f1919] bg-white p-8">
+        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-amber-700">
+          {dashboardRoleLabel}
         </p>
-        <h1 className="mt-3 text-4xl font-bold text-slate-900">Editor dashboard</h1>
+        <h1 className="mt-3 font-serif text-4xl font-bold text-slate-900">{dashboardTitle}</h1>
         <p className="mt-3 text-lg text-slate-600">
-          A role-aware workspace for managing stories, approvals, and editorial assignments.
+          A role-aware newsroom experience designed to help your team move from draft to publish faster.
         </p>
         <p className="mt-3 text-sm text-slate-600">
           {isAdmin
-            ? "You have full site permissions."
+            ? "Manage the site layout, review workflow, and view all account roles from one dashboard."
             : isReviewer
-            ? "Reviewers can approve or request revisions on pending articles."
+            ? "Approve stories, request revisions, and keep the newsroom moving."
             : isWriter
-            ? "Writers can submit drafts and see assigned editors."
+            ? "Upload reporting PDFs, submit drafts, and track your publishing progress."
             : "Use your account to access the newsroom."}
         </p>
       </div>
 
       {isAdmin ? (
-        <div className="mt-6 rounded-3xl border border-blue-200 bg-blue-50 p-6 text-sm text-blue-900">
-          <p className="font-semibold">Admin controls</p>
-          <p className="mt-2">Admins can manage content, approve editor requests, and oversee site workflow.</p>
+        <div className="mt-6 border-y border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold">Admin controls</p>
+              <p className="mt-2">Admins can manage site ordering, adjust homepage sections, and review every account role.</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={async () => {
+                  const next = !underDevelopment;
+                  setUnderDevelopment(next);
+                  try {
+                    await siteSettings.setUnderDevelopment(next);
+                  } catch (e) {
+                    // ignore
+                  }
+                }}
+                className="rounded-full border border-amber-700 bg-white/90 px-3 py-2 text-sm font-semibold text-amber-700"
+              >
+                {underDevelopment ? "Disable dev mode" : "Enable dev mode"}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setDrafts([]);
+                  setPendingArticles([]);
+                  setPublishedArticles([]);
+                  try {
+                    await siteSettings.clearDemoData();
+                  } catch (e) {
+                    // ignore
+                  }
+                  if (typeof window !== "undefined") {
+                    window.sessionStorage.removeItem("kau-high-drafts");
+                    window.sessionStorage.removeItem("kau-high-pending-articles");
+                    window.sessionStorage.removeItem("kau-high-published-articles");
+                  }
+                }}
+                className="rounded-full border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900"
+              >
+                Clear demo content
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setAccounts([]);
+                  try {
+                    await siteSettings.clearDemoData();
+                  } catch (e) {
+                    // ignore
+                  }
+                }}
+                className="rounded-full border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-600"
+              >
+                Remove demo accounts
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
+
+      <div className="mt-8 border-y border-slate-200 bg-white p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-900">Quick actions</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              {canCreateDraft
+                ? "Create content, manage stories, and keep the site posting in the right order."
+                : "Track your stories and stay up to date with the latest newsroom activity."}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {canCreateDraft ? (
+              <Link href="/dashboard/new" className="rounded-full bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600">
+                New article
+              </Link>
+            ) : null}
+            {isAdmin ? (
+              <Link href="/dashboard/newsletter" className="rounded-full border border-amber-700 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100">
+                Design newsletter
+              </Link>
+            ) : null}
+            {(isReviewer || isAdmin) ? (
+              <button
+                type="button"
+                className="rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900"
+              >
+                Review queue
+              </button>
+            ) : null}
+            <Link href="/" className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-900">
+              View latest stories
+            </Link>
+          </div>
+        </div>
+      </div>
 
       <div className="mt-8 grid gap-6 md:grid-cols-3">
         {dashboardSections.map((section) => (
@@ -154,6 +383,145 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {isAdmin ? (
+        <div className="mt-8 grid gap-6 xl:grid-cols-[1.4fr_0.6fr]">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-2xl font-semibold text-slate-900">Site layout & order</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Adjust the order of homepage sections and turn sections on or off for a cleaner student newspaper experience.
+            </p>
+            <div className="mt-6 space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Homepage order</h3>
+                <ul className="mt-4 space-y-2">
+                  {contentOrder.map((section, index) => (
+                    <li key={section} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <span>{index + 1}. {section}</span>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() => moveSection(index, -1)}
+                          className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          disabled={index === contentOrder.length - 1}
+                          onClick={() => moveSection(index, 1)}
+                          className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Show section</h3>
+                <div className="mt-4 space-y-3">
+                  {Object.entries(sectionVisibility).map(([section, visible]) => (
+                    <label key={section} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={visible}
+                        onChange={() => toggleSection(section)}
+                        className="h-4 w-4 rounded border-slate-300 text-amber-600"
+                      />
+                      <span className="text-sm text-slate-700">{section}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Featured article</h3>
+                  <div className="mt-4 space-y-3">
+                    <select
+                      value={featuredSlug}
+                      onChange={async (e) => {
+                        const slug = e.target.value;
+                        setFeaturedSlug(slug);
+                        try {
+                          await siteSettings.setFeatured(slug, featuredImage || undefined);
+                        } catch (err) {
+                          // ignore
+                        }
+                      }}
+                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none"
+                    >
+                      {articles.map((a) => (
+                        <option key={a.slug} value={a.slug}>
+                          {a.title}
+                        </option>
+                      ))}
+                    </select>
+
+                    <label className="block text-sm font-medium text-slate-700">
+                      Featured image URL (optional)
+                      <input
+                        value={featuredImage}
+                        onChange={async (e) => {
+                          const img = e.target.value;
+                          setFeaturedImage(img);
+                          try {
+                            await siteSettings.setFeatured(featuredSlug || undefined, img || undefined);
+                          } catch (err) {
+                            // ignore
+                          }
+                        }}
+                        placeholder="https://example.com/image.jpg"
+                        className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none"
+                      />
+                    </label>
+
+                    <div className="mt-2">
+                      <p className="text-sm text-slate-600">Preview</p>
+                      <div className="mt-2 h-36 w-full overflow-hidden rounded-lg bg-slate-100">
+                        <img
+                          src={featuredImage || (articles.find((a) => a.slug === featuredSlug)?.image ?? "")}
+                          alt="Featured preview"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-2xl font-semibold text-slate-900">Team accounts</h2>
+            <p className="mt-2 text-sm text-slate-600">See every account role in the newsroom and who has active access.</p>
+            <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200">
+              <table className="min-w-full text-left text-sm text-slate-700">
+                <thead className="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Name</th>
+                    <th className="px-4 py-3">Email</th>
+                    <th className="px-4 py-3">Role</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accounts.map((account: any) => (
+                    <tr key={account.id} className="border-t border-slate-200">
+                      <td className="px-4 py-3 font-semibold text-slate-900">{account.name}</td>
+                      <td className="px-4 py-3">{account.email}</td>
+                      <td className="px-4 py-3">{account.role}</td>
+                      <td className="px-4 py-3 text-slate-600">{account.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -165,9 +533,9 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              {isWriter ? (
-                <Link href="/dashboard/new" className="rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white">
-                  New draft
+              {canCreateDraft ? (
+                <Link href="/dashboard/new" className="rounded-full bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600">
+                  New article
                 </Link>
               ) : null}
               <Link href="/" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
@@ -184,6 +552,9 @@ export default function DashboardPage() {
                 <p className="text-sm text-slate-600">
                   {draft.author} • {draft.updatedAt}
                 </p>
+                {draft.pdfName ? (
+                  <p className="mt-1 text-sm text-amber-700">PDF attached: {draft.pdfName}</p>
+                ) : null}
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
                 {draft.status}
@@ -202,6 +573,9 @@ export default function DashboardPage() {
                   <p className="text-sm text-slate-600">
                     {article.author} • {article.category}
                   </p>
+                  {article.pdfName ? (
+                    <p className="mt-1 text-sm text-amber-700">PDF attached: {article.pdfName}</p>
+                  ) : null}
                 </div>
                 <div className="flex flex-col items-start gap-3 md:items-end">
                   <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">

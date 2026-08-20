@@ -1,12 +1,12 @@
 export default function AboutSection() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-16">
-      <div className="grid gap-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <div className="grid gap-8 border-y border-slate-200 bg-white p-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700">
             About the paper
           </p>
-          <h3 className="mt-3 text-3xl font-bold text-slate-900">
+          <h3 className="mt-3 font-serif text-3xl font-bold text-slate-900">
             Reporting the stories that shape school life.
           </h3>
           <p className="mt-4 text-lg leading-8 text-slate-600">
@@ -14,7 +14,7 @@ export default function AboutSection() {
           </p>
         </div>
 
-        <div className="rounded-2xl bg-slate-900 p-8 text-white">
+        <div className="border-l-4 border-amber-500 bg-slate-900 p-8 text-white">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">
             This week at Kau
           </p>
