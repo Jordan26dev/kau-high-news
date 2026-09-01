@@ -1,8 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { Session, User } from "@supabase/supabase-js";
 import supabase from "@/lib/supabaseClient";
-import type { AppUser } from "@/types/user";
+import { isRole, type AppUser, type Role } from "@/types/user";
 
 type AuthContextValue = {
   user: AppUser | null;
@@ -21,15 +22,22 @@ export function AuthProvider({
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-function buildAppUser(user: any): AppUser {
+type StaffProfile = {
+  display_name: string | null;
+  role: string | null;
+  status: string | null;
+};
+
+function buildAppUser(user: User, profile?: StaffProfile): AppUser {
   const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
+  const databaseRole: Role = isRole(profile?.role) ? profile.role : "Writer";
 
   return {
     id: user.id,
-    email: user.email,
-    name: (metadata.name as string) || "",
-    role: (metadata.role as AppUser["role"]) || "Writer",
-    status: (metadata.status as "active" | "pending") || "active",
+    email: user.email ?? "",
+    name: profile?.display_name || (metadata.name as string) || "",
+    role: databaseRole,
+    status: profile?.status === "pending" ? "pending" : "active",
     requestedEditor: Boolean(metadata.requestedEditor),
   };
 }
@@ -46,18 +54,28 @@ export function AuthStateProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
 
       if (data?.user) {
-        setUser(buildAppUser(data.user));
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name, role, status")
+          .eq("id", data.user.id)
+          .maybeSingle();
+        if (mounted) setUser(buildAppUser(data.user, profile ?? undefined));
       }
       setLoading(false);
     }
 
     loadUser();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, session: Session | null) => {
       if (!mounted) return;
 
       if (session?.user) {
-        setUser(buildAppUser(session.user));
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name, role, status")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        if (mounted) setUser(buildAppUser(session.user, profile ?? undefined));
       } else {
         setUser(null);
       }
@@ -67,7 +85,7 @@ export function AuthStateProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
-      (subscription as any)?.subscription?.unsubscribe?.();
+      subscription.subscription.unsubscribe();
     };
   }, []);
 

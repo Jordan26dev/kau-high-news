@@ -17,9 +17,11 @@ import TopStories from "@/components/TopStories";
 import UpcomingEvents from "@/components/UpcomingEvents";
 
 import { articles } from "@/data/articles";
+import { listPublishedArticles } from "@/lib/articleRepository";
 import siteSettings from "@/lib/siteSettings";
 
 export default function Home() {
+  const [publishedArticles, setPublishedArticles] = useState(articles);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [underDevelopment, setUnderDevelopment] = useState(false);
@@ -49,16 +51,35 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadPublishedArticles() {
+      try {
+        const nextArticles = await listPublishedArticles();
+        if (mounted && nextArticles.length > 0) setPublishedArticles(nextArticles);
+      } catch {
+        // Keep the local published demo stories available when Supabase is unavailable.
+      }
+    }
+
+    void loadPublishedArticles();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
-      new Set(articles.map((article) => article.category))
+      new Set(publishedArticles.map((article) => article.category))
     );
 
     return ["All", ...uniqueCategories];
-  }, []);
+  }, [publishedArticles]);
 
   const featuredCategories = useMemo(() => {
-    const counts = articles.reduce<Record<string, number>>((accumulator, article) => {
+    const counts = publishedArticles.reduce<Record<string, number>>((accumulator, article) => {
       accumulator[article.category] = (accumulator[article.category] || 0) + 1;
       return accumulator;
     }, {});
@@ -68,12 +89,12 @@ export default function Home() {
       { name: "News", description: "Campus events and student life", count: counts.News || 0 },
       { name: "Clubs", description: "Student organizations and achievements", count: counts.Clubs || 0 },
     ];
-  }, []);
+  }, [publishedArticles]);
 
   const filteredArticles = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    return articles.filter((article) => {
+    return publishedArticles.filter((article) => {
       const matchesCategory =
         selectedCategory === "All" || article.category === selectedCategory;
       const matchesSearch =
@@ -85,7 +106,7 @@ export default function Home() {
 
       return matchesCategory && matchesSearch;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [publishedArticles, searchTerm, selectedCategory]);
 
   return (
     <main className="min-h-screen bg-slate-100">
@@ -103,7 +124,8 @@ export default function Home() {
         <>
           <BreakingNewsBanner />
           {(() => {
-            const base = articles.find((a) => a.slug === featuredSlug) ?? articles[0];
+            const base = publishedArticles.find((a) => a.slug === featuredSlug) ?? publishedArticles[0];
+            if (!base) return null;
             const featured = { ...base, image: featuredImage || base.image };
             return <FeaturedArticle article={featured} />;
           })()}
@@ -116,7 +138,7 @@ export default function Home() {
               <span className="hidden text-sm text-slate-500 sm:block">Reporting from the campus community</span>
             </div>
             <div className="newspaper-grid grid gap-5 lg:grid-cols-[1.55fr_0.95fr_0.95fr] lg:gap-0">
-              {articles.slice(0, 3).map((article, index) => (
+              {publishedArticles.slice(0, 3).map((article, index) => (
                 <article key={article.slug} className={`px-0 lg:px-6 ${index > 0 ? "lg:border-l lg:border-[#d9c7ae]" : ""}`}>
                   {index === 0 ? <img src={article.image} alt="" className="mb-3 aspect-[16/8] w-full object-cover" /> : null}
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-800">{article.category}</p>
@@ -132,7 +154,7 @@ export default function Home() {
         </>
       )}
       <CategorySpotlight featuredCategories={featuredCategories} />
-      <TopStories stories={articles.slice(0, 3)} />
+      <TopStories stories={publishedArticles.slice(0, 3)} />
       <PhotoOfWeek />
       <UpcomingEvents />
       <AboutSection />

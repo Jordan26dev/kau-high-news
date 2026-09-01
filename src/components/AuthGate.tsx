@@ -11,8 +11,6 @@ type AuthGateProps = {
 
 type FormMode = "sign-in" | "sign-up";
 
-const ADMIN_INVITE_CODE = "KAU-ADMIN-2026";
-
 const roleOptions: Array<{ value: Role; label: string }> = [
   { value: "Teacher", label: "Teacher" },
   { value: "Writer", label: "Writer" },
@@ -25,8 +23,6 @@ export default function AuthGate({ children }: AuthGateProps) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<Role>("Writer");
-  const [adminCode, setAdminCode] = useState("");
-  const [showAdminCode, setShowAdminCode] = useState(false);
   const [requestEditor, setRequestEditor] = useState(false);
   const [error, setError] = useState("");
   const [loadingForm, setLoadingForm] = useState(false);
@@ -58,15 +54,7 @@ export default function AuthGate({ children }: AuthGateProps) {
 
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedName = name.trim();
-    const trimmedAdminCode = adminCode.trim();
-
-    if (trimmedAdminCode && trimmedAdminCode !== ADMIN_INVITE_CODE) {
-      setError("Invalid administrator invite code.");
-      setLoadingForm(false);
-      return;
-    }
-
-    const selectedRole: Role = trimmedAdminCode === ADMIN_INVITE_CODE ? "Administrator" : role;
+    const selectedRole: Role = role;
     const wantsEditor = selectedRole === "Writer" && requestEditor;
 
     const { error: signUpError } = await supabase.auth.signUp({
@@ -208,26 +196,9 @@ export default function AuthGate({ children }: AuthGateProps) {
                 </select>
               </label>
 
-              <button
-                type="button"
-                onClick={() => setShowAdminCode((current) => !current)}
-                className="text-sm font-semibold text-blue-700 hover:underline"
-              >
-                {showAdminCode ? "Hide admin invite code" : "Have an admin invite code?"}
-              </button>
-
-              {showAdminCode ? (
-                <label className="block text-sm font-semibold text-slate-700">
-                  Admin invite code
-                  <input
-                    type="text"
-                    value={adminCode}
-                    onChange={(event) => setAdminCode(event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-700"
-                    placeholder="Enter secret admin code"
-                  />
-                </label>
-              ) : null}
+              <p className="text-xs leading-5 text-slate-500">
+                Staff roles are assigned by an administrator after account creation.
+              </p>
             </>
           ) : null}
 

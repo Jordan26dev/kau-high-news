@@ -8,7 +8,7 @@ function hasWindow() {
   return typeof window !== "undefined";
 }
 
-export async function getSetting(key: string): Promise<any> {
+export async function getSetting(key: string): Promise<unknown> {
   if (hasSupabase) {
     const { data, error } = await supabase.from("settings").select("value").eq("key", key).maybeSingle();
     if (error) {
@@ -51,7 +51,10 @@ export async function getFeatured(): Promise<{ slug?: string; image?: string } |
   const slug = await getSetting("featuredSlug");
   const image = await getSetting("featuredImage");
   if (!slug && !image) return null;
-  return { slug, image };
+  return {
+    slug: typeof slug === "string" ? slug : undefined,
+    image: typeof image === "string" ? image : undefined,
+  };
 }
 
 export async function setFeatured(slug?: string, image?: string): Promise<void> {
@@ -91,7 +94,7 @@ export async function clearDemoData(): Promise<void> {
   }
 }
 
-export default {
+const siteSettings = {
   getSetting,
   setSetting,
   getFeatured,
@@ -100,3 +103,5 @@ export default {
   setUnderDevelopment,
   clearDemoData,
 };
+
+export default siteSettings;

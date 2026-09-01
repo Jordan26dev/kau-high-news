@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { articles } from "@/data/articles";
+import { listPublishedArticles } from "@/lib/articleRepository";
 
 interface CategoryPageProps {
   params: Promise<{
@@ -11,7 +12,16 @@ interface CategoryPageProps {
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { category } = await params;
   const decodedCategory = decodeURIComponent(category);
-  const categoryArticles = articles.filter(
+  let availableArticles = articles;
+
+  try {
+    const publishedArticles = await listPublishedArticles();
+    if (publishedArticles.length > 0) availableArticles = publishedArticles;
+  } catch {
+    // Keep demo content available when Supabase is unavailable.
+  }
+
+  const categoryArticles = availableArticles.filter(
     (article) => article.category === decodedCategory
   );
 

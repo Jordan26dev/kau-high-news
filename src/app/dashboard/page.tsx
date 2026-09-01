@@ -11,6 +11,7 @@ import { drafts as initialDrafts } from "@/data/drafts";
 import { pendingArticles as initialPendingArticles } from "@/data/pendingArticles";
 import { users as accountUsers } from "@/data/users";
 import { articles } from "@/data/articles";
+import { listDashboardArticles, listStaffProfiles, updateArticleStatus } from "@/lib/articleRepository";
 import siteSettings from "@/lib/siteSettings";
 
 type Draft = {
@@ -29,6 +30,14 @@ type PendingArticle = {
   status: string;
   category: string;
   pdfName?: string;
+};
+
+type Account = {
+  id: number | string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
 };
 
 export default function DashboardPage() {
@@ -58,6 +67,62 @@ export default function DashboardPage() {
     const storedPublishedArticles = window.sessionStorage.getItem("kau-high-published-articles");
     return storedPublishedArticles ? JSON.parse(storedPublishedArticles) : [];
   });
+
+  const [articlesLoading, setArticlesLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadDashboardArticles() {
+      setArticlesLoading(true);
+      try {
+        const rows = await listDashboardArticles();
+
+        if (!active || rows.length === 0) {
+          setArticlesLoading(false);
+          return;
+        }
+
+        const nextDrafts = rows
+          .filter((row) => ["draft", "changes_requested"].includes(row.status ?? ""))
+          .map((row) => ({
+            id: row.id,
+            title: row.title ?? "Untitled story",
+            status: row.status ?? "Draft",
+            author: row.author ?? "Staff writer",
+            updatedAt: row.updated_at ? new Date(row.updated_at).toLocaleDateString() : "Recently",
+          }));
+
+        const nextPending = rows
+          .filter((row) => ["submitted", "in_review", "changes_requested"].includes(row.status ?? ""))
+          .map((row) => ({
+            id: row.id,
+            title: row.title ?? "Untitled story",
+            author: row.author ?? "Staff writer",
+            status: row.status ?? "Submitted",
+            category: row.category ?? "News",
+          }));
+
+        const nextPublished = rows
+          .filter((row) => row.status === "published")
+          .map((row) => row.title ?? "Untitled story");
+
+        setDrafts(nextDrafts.length > 0 ? nextDrafts : initialDrafts);
+        setPendingArticles(nextPending.length > 0 ? nextPending : initialPendingArticles);
+        setPublishedArticles(nextPublished.length > 0 ? nextPublished : []);
+      } catch {
+        // fallback to local demo data in the same way the app already supports
+      } finally {
+        setArticlesLoading(false);
+      }
+    }
+
+    loadDashboardArticles();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const [contentOrder, setContentOrder] = useState<string[]>(() => {
     const defaultOrder = ["Top stories", "Photo of the week", "Upcoming events"];
@@ -111,8 +176,14 @@ export default function DashboardPage() {
     }
   }, [sectionVisibility]);
 
-  const handleApprove = (id: number) => {
+  const handleApprove = async (id: number) => {
     const approvedArticle = pendingArticles.find((article: PendingArticle) => article.id === id);
+
+    try {
+      await updateArticleStatus(id, "published");
+    } catch {
+      // allow the local dashboard to continue even if the write is unavailable
+    }
 
     if (!approvedArticle) {
       return;
@@ -124,7 +195,13 @@ export default function DashboardPage() {
     setPublishedArticles((currentArticles) => [approvedArticle.title, ...currentArticles]);
   };
 
-  const handleRequestRevision = (id: number) => {
+  const handleRequestRevision = async (id: number) => {
+    try {
+      await updateArticleStatus(id, "changes_requested");
+    } catch {
+      // allow the local dashboard to continue even if the write is unavailable
+    }
+
     setPendingArticles((currentArticles: PendingArticle[]) =>
       currentArticles.map((article: PendingArticle) =>
         article.id === id ? { ...article, status: "Needs Revision" } : article
@@ -150,11 +227,42 @@ export default function DashboardPage() {
 
   const { user } = useAuth();
 
-  const [accounts, setAccounts] = useState(() => {
+  const [accounts, setAccounts] = useState<Account[]>(() => {
     if (typeof window === "undefined") return accountUsers;
     const stored = window.localStorage.getItem("kau-high-accounts");
     return stored ? JSON.parse(stored) : accountUsers;
   });
+
+  useEffect(() => {
+    if (user?.role !== "Administrator") return;
+
+    let active = true;
+
+    async function loadProfiles() {
+      try {
+        const profiles = await listStaffProfiles();
+        if (!active || profiles.length === 0) return;
+
+        setAccounts(
+          profiles.map((profile) => ({
+            id: profile.id,
+            name: profile.display_name || "Unnamed staff member",
+            email: "",
+            role: profile.role,
+            status: profile.status,
+          }))
+        );
+      } catch {
+        // Keep the existing demo account fallback when profiles are unavailable.
+      }
+    }
+
+    void loadProfiles();
+
+    return () => {
+      active = false;
+    };
+  }, [user?.role]);
 
   const [underDevelopment, setUnderDevelopment] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -356,13 +464,18 @@ export default function DashboardPage() {
                 Design newsletter
               </Link>
             ) : null}
+            {isAdmin ? (
+              <Link href="/dashboard/staff" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900">
+                Manage staff
+              </Link>
+            ) : null}
             {(isReviewer || isAdmin) ? (
-              <button
-                type="button"
+              <Link
+                href="/dashboard/review"
                 className="rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900"
               >
                 Review queue
-              </button>
+              </Link>
             ) : null}
             <Link href="/" className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-900">
               View latest stories
@@ -372,15 +485,23 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-8 grid gap-6 md:grid-cols-3">
-        {dashboardSections.map((section) => (
-          <div key={section.title} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-              {section.title}
-            </p>
-            <p className="mt-4 text-4xl font-bold text-slate-900">{section.count}</p>
-            <p className="mt-3 text-sm leading-7 text-slate-600">{section.description}</p>
-          </div>
-        ))}
+        {articlesLoading ? (
+          <>
+            <div className="h-32 rounded-2xl border border-slate-200 bg-slate-50 p-6 animate-pulse" />
+            <div className="h-32 rounded-2xl border border-slate-200 bg-slate-50 p-6 animate-pulse" />
+            <div className="h-32 rounded-2xl border border-slate-200 bg-slate-50 p-6 animate-pulse" />
+          </>
+        ) : (
+          dashboardSections.map((section) => (
+            <div key={section.title} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                {section.title}
+              </p>
+              <p className="mt-4 text-4xl font-bold text-slate-900">{section.count}</p>
+              <p className="mt-3 text-sm leading-7 text-slate-600">{section.description}</p>
+            </div>
+          ))
+        )}
       </div>
 
       {isAdmin ? (
@@ -507,7 +628,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {accounts.map((account: any) => (
+                  {accounts.map((account) => (
                     <tr key={account.id} className="border-t border-slate-200">
                       <td className="px-4 py-3 font-semibold text-slate-900">{account.name}</td>
                       <td className="px-4 py-3">{account.email}</td>
@@ -545,50 +666,69 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-6 space-y-3">
-          {drafts.map((draft) => (
-            <div key={draft.id} className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="font-semibold text-slate-900">{draft.title}</p>
-                <p className="text-sm text-slate-600">
-                  {draft.author} • {draft.updatedAt}
-                </p>
-                {draft.pdfName ? (
-                  <p className="mt-1 text-sm text-amber-700">PDF attached: {draft.pdfName}</p>
-                ) : null}
-              </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
-                {draft.status}
-              </span>
+          {drafts.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600">
+              <p className="font-semibold">No drafts yet</p>
+              <p className="mt-1">Start writing your first story.</p>
+              {canCreateDraft ? (
+                <Link href="/dashboard/new" className="mt-4 inline-block rounded-full bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600">
+                  Create article
+                </Link>
+              ) : null}
             </div>
-          ))}
+          ) : (
+            drafts.map((draft) => (
+              <div key={draft.id} className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="font-semibold text-slate-900">{draft.title}</p>
+                  <p className="text-sm text-slate-600">
+                    {draft.author} • {draft.updatedAt}
+                  </p>
+                  {draft.pdfName ? (
+                    <p className="mt-1 text-sm text-amber-700">PDF attached: {draft.pdfName}</p>
+                  ) : null}
+                </div>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+                  {draft.status}
+                </span>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="mt-8">
           <h3 className="text-lg font-semibold text-slate-900">Pending review</h3>
           <div className="mt-4 space-y-3">
-            {pendingArticles.map((article) => (
-              <div key={article.id} className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="font-semibold text-slate-900">{article.title}</p>
-                  <p className="text-sm text-slate-600">
-                    {article.author} • {article.category}
-                  </p>
-                  {article.pdfName ? (
-                    <p className="mt-1 text-sm text-amber-700">PDF attached: {article.pdfName}</p>
-                  ) : null}
-                </div>
-                <div className="flex flex-col items-start gap-3 md:items-end">
-                  <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">
-                    {article.status}
-                  </span>
-                  <ReviewActions
-                    articleId={article.id}
-                    onApprove={handleApprove}
-                    onRequestRevision={handleRequestRevision}
-                  />
-                </div>
+            {pendingArticles.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600">
+                <p className="font-semibold">No articles waiting for review</p>
+                <p className="mt-1">All submissions have been processed.</p>
               </div>
-            ))}
+            ) : (
+              pendingArticles.map((article) => (
+                <div key={article.id} className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="font-semibold text-slate-900">{article.title}</p>
+                    <p className="text-sm text-slate-600">
+                      {article.author} • {article.category}
+                    </p>
+                    {article.pdfName ? (
+                      <p className="mt-1 text-sm text-amber-700">PDF attached: {article.pdfName}</p>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-col items-start gap-3 md:items-end">
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">
+                      {article.status}
+                    </span>
+                    <ReviewActions
+                      articleId={article.id}
+                      onApprove={handleApprove}
+                      onRequestRevision={handleRequestRevision}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

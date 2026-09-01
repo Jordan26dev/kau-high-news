@@ -6,6 +6,7 @@ import ArticleMeta from "@/components/ArticleMeta";
 import NewsCard from "@/components/NewsCard";
 import { articles } from "@/data/articles";
 import { authors } from "@/data/authors";
+import { getPublishedArticle } from "@/lib/articleRepository";
 
 interface ArticlePageProps {
   params: Promise<{
@@ -15,7 +16,13 @@ interface ArticlePageProps {
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
-  const article = articles.find((item) => item.slug === slug);
+  let article = articles.find((item) => item.slug === slug) ?? null;
+
+  try {
+    article = (await getPublishedArticle(slug)) ?? article;
+  } catch {
+    // Keep the published demo article available when Supabase is unavailable.
+  }
 
   if (!article) {
     return <div>Article not found.</div>;
