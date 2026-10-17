@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 type ArticleMetaProps = {
   author: string;
+  authorSlug?: string;
   date: string;
   readingTime: string;
   title: string;
@@ -12,6 +14,7 @@ type ArticleMetaProps = {
 
 export default function ArticleMeta({
   author,
+  authorSlug,
   date,
   readingTime,
   title,
@@ -66,7 +69,11 @@ export default function ArticleMeta({
     <div className="mt-4 flex flex-col gap-3 border-y border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p>
-          By {author} • {date}
+          By {authorSlug ? (
+            <Link href={`/authors/${authorSlug}`} className="font-semibold text-[#7f1919] hover:underline">
+              {author}
+            </Link>
+          ) : author} • {date}
         </p>
         <p className="mt-1 font-medium text-slate-700">{readingTime}</p>
       </div>

@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 type TopStoriesProps = {
+  label: string;
+  title: string;
+  description: string;
   stories: Array<{
     title: string;
     summary: string;
@@ -9,19 +12,19 @@ type TopStoriesProps = {
   }>;
 };
 
-export default function TopStories({ stories }: TopStoriesProps) {
+export default function TopStories({ label, title, description, stories }: TopStoriesProps) {
   return (
     <section className="mx-auto max-w-7xl px-4 pb-4 sm:px-6">
       <div className="border-y-2 border-[#5b1212] bg-[#fffdf7] py-4 text-[#5b1212]">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-800">
-              Top stories
+              {label}
             </p>
-            <h3 className="mt-1 font-serif text-2xl font-bold">What readers are clicking</h3>
+            <h3 className="mt-1 font-serif text-2xl font-bold">{title}</h3>
           </div>
           <p className="max-w-xl text-slate-600">
-            A quick snapshot of the stories that matter most to the school community.
+            {description}
           </p>
         </div>
 

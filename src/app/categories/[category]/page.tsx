@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { articles } from "@/data/articles";
 import { listPublishedArticles } from "@/lib/articleRepository";
+import type { Article } from "@/types/article";
 
 interface CategoryPageProps {
   params: Promise<{
@@ -12,13 +12,19 @@ interface CategoryPageProps {
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { category } = await params;
   const decodedCategory = decodeURIComponent(category);
-  let availableArticles = articles;
+  let availableArticles: Article[];
 
   try {
-    const publishedArticles = await listPublishedArticles();
-    if (publishedArticles.length > 0) availableArticles = publishedArticles;
-  } catch {
-    // Keep demo content available when Supabase is unavailable.
+    availableArticles = await listPublishedArticles();
+  } catch (error) {
+    console.error("Unable to load published category stories.", error);
+    return (
+      <main className="mx-auto max-w-6xl px-6 py-16">
+        <p role="alert" className="border border-red-200 bg-red-50 p-5 text-sm text-red-800">
+          Stories in this section are temporarily unavailable. Please try again soon.
+        </p>
+      </main>
+    );
   }
 
   const categoryArticles = availableArticles.filter(

@@ -11,6 +11,7 @@ export default function PageTransition() {
   const pendingPath = useRef<string | null>(null);
   const [phase, setPhase] = useState<"hidden" | "active" | "exit">("hidden");
   const transitionTimer = useRef<number | null>(null);
+  const isStudio = pathname.startsWith("/studio");
 
   const startTransition = () => {
     if (transitionTimer.current) {
@@ -72,7 +73,7 @@ export default function PageTransition() {
     }
   }, []);
 
-  if (phase === "hidden") {
+  if (phase === "hidden" || isStudio) {
     return null;
   }
 

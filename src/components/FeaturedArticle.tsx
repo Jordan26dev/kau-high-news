@@ -2,6 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 type FeaturedArticleProps = {
+  label: string;
+  asideLabel: string;
+  asideTitle: string;
+  asideDescription: string;
   article: {
     category: string;
     title: string;
@@ -13,14 +17,20 @@ type FeaturedArticleProps = {
   };
 };
 
-export default function FeaturedArticle({ article }: FeaturedArticleProps) {
+export default function FeaturedArticle({
+  label,
+  asideLabel,
+  asideTitle,
+  asideDescription,
+  article,
+}: FeaturedArticleProps) {
   return (
     <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
       <div className="overflow-hidden border-y-4 border-[#5b1212] bg-[#fffdf7] text-[#5b1212]">
         <div className="grid gap-0 lg:grid-cols-[0.85fr_1.35fr_0.8fr]">
           <div className="border-b border-[#d9c7ae] p-5 lg:border-b-0 lg:border-r">
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-800">
-              Featured Story
+              {label}
             </p>
 
             <div className="mt-4">
@@ -48,20 +58,26 @@ export default function FeaturedArticle({ article }: FeaturedArticleProps) {
             </div>
           </div>
 
-          <div className="relative min-h-[250px] w-full lg:min-h-[320px]">
-            <Image
-              src={article.image}
-              alt={article.title}
-              fill
-              sizes="(min-width: 1024px) 40vw, 100vw"
-              className="object-cover"
-              unoptimized
-            />
+          <div className="relative min-h-[250px] w-full bg-[#f1e8db] lg:min-h-[320px]">
+            {article.image ? (
+              <Image
+                src={article.image}
+                alt={article.title}
+                fill
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                className="object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="flex h-full min-h-[250px] items-center justify-center px-6 text-center font-serif text-2xl font-bold text-[#7f1919]">
+                Kau High News
+              </div>
+            )}
           </div>
           <div className="hidden border-l border-[#d9c7ae] p-5 lg:block">
-            <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-amber-800">Editor&apos;s pick</p>
-            <p className="mt-3 font-serif text-xl font-bold leading-tight text-[#5b1212]">A closer look at the stories shaping campus this week.</p>
-            <p className="mt-3 text-xs leading-5 text-slate-600">Student voices, school events, and reporting from across the community.</p>
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-amber-800">{asideLabel}</p>
+            <p className="mt-3 font-serif text-xl font-bold leading-tight text-[#5b1212]">{asideTitle}</p>
+            <p className="mt-3 text-xs leading-5 text-slate-600">{asideDescription}</p>
           </div>
         </div>
       </div>

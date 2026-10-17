@@ -8,12 +8,12 @@ const navItems = [
   { label: "News", href: "/categories/News" },
   { label: "Sports", href: "/categories/Sports" },
   { label: "Clubs", href: "/categories/Clubs" },
-  { label: "Authors", href: "/authors/jordan-virgo" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
   const isHome = pathname === "/";
+  if (pathname.startsWith("/studio")) return null;
 
   return (
     <header className={`site-header border-b border-[#5b1212] bg-[#fffdf7] text-[#5b1212] ${isHome ? "site-header-home" : ""}`}>

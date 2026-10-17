@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kau High News
 
-## Getting Started
+Kau High News is a Next.js student newspaper website. It uses Sanity for its private editor, story drafts, publishing, and photo uploads. The public site reads published stories and keeps its current newspaper design.
 
-First, run the development server:
+## Get started
+
+Follow [EDITOR_GUIDE.md](./EDITOR_GUIDE.md) to create the Sanity project, connect the site, sign in at `/studio`, and publish stories. Existing Supabase data is preserved and is not automatically imported.
+
+For local development:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) for the public site or [http://localhost:3000/studio](http://localhost:3000/studio) for the editor.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Verify
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+## Content model
 
-To learn more about Next.js, take a look at the following resources:
+Sanity's `Story` type contains the headline, URL, section, subtitle, summary, byline, publication date, photo with alt text/caption, tags, and story text. Sanity drafts are private; published documents appear on the public site.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The old Supabase migrations are retained as database history. This app no longer uses Supabase for sign-in or publishing.

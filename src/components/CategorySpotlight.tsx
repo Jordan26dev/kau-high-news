@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 type CategorySpotlightProps = {
+  label: string;
+  title: string;
+  description: string;
   featuredCategories: Array<{
     name: string;
     description: string;
@@ -9,6 +12,9 @@ type CategorySpotlightProps = {
 };
 
 export default function CategorySpotlight({
+  label,
+  title,
+  description,
   featuredCategories,
 }: CategorySpotlightProps) {
   return (
@@ -17,14 +23,14 @@ export default function CategorySpotlight({
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-800">
-              In the newsroom
+              {label}
             </p>
             <h3 className="mt-1 font-serif text-2xl font-bold text-slate-900">
-              Browse by section
+              {title}
             </h3>
           </div>
           <p className="max-w-xl text-slate-600">
-            A quick look at the most active parts of the paper, from sports to student life.
+            {description}
           </p>
         </div>
 

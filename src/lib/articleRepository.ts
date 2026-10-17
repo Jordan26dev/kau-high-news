@@ -1,307 +1,287 @@
+import { createClient, defineQuery } from "next-sanity";
+
 import type { Article } from "@/types/article";
-import supabase from "@/lib/supabaseClient";
+import {
+  defaultHomepageSettings,
+  type HomepageSettings,
+  type StaffProfile,
+} from "@/types/newsroom";
 
-const hasSupabase = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
+const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+const publishedContentRevalidateSeconds = 10;
 
-type CreateArticleInput = {
-  title: string;
-  subtitle?: string;
-  summary: string;
-  category: string;
-  tags?: string[];
-  content: string;
-  heroImage?: string;
-  imageCaption?: string;
-  authorId: string;
-  authorName: string;
-  status: "draft" | "submitted";
-};
+const client = projectId
+  ? createClient({
+      projectId,
+      dataset,
+      apiVersion: "2025-01-01",
+      useCdn: true,
+    })
+  : null;
 
-type ArticleRow = {
-  id: number;
-  slug: string;
-  category: string | null;
-  title: string | null;
-  subtitle: string | null;
-  summary: string | null;
-  author: string | null;
-  date: string | null;
-  updated_date: string | null;
-  reading_time: string | null;
-  image: string | null;
-  tags: string[] | null;
-  content: string | null;
-  status: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  published_at?: string | null;
-  author_id?: string | null;
-};
+const articleFields = `
+  "id": _id,
+  "slug": slug.current,
+  category,
+  title,
+  subtitle,
+  summary,
+  "author": coalesce(authorProfile->name, author),
+  "authorProfileId": authorProfile._ref,
+  "authorProfileSlug": authorProfile->slug.current,
+  "date": publishedAt,
+  "updatedDate": _updatedAt,
+  readingTime,
+  "image": heroImage.asset->url,
+  "imageAlt": heroImage.alt,
+  "imageCaption": heroImage.caption,
+  tags,
+  content
+`;
 
-export type DashboardArticleRow = {
-  id: number;
-  title: string | null;
-  summary: string | null;
-  author: string | null;
-  category: string | null;
-  status: string | null;
-  updated_at: string | null;
-  created_at: string | null;
-  published_at: string | null;
-};
+const publishedArticlesQuery = defineQuery(`
+  *[_type == "article" && defined(slug.current)] | order(publishedAt desc, _createdAt desc) {
+    ${articleFields}
+  }
+`);
 
-export type EditorialNote = {
-  id: number;
-  note: string;
-  author_id: string;
-  created_at: string;
-};
+const publishedArticleBySlugQuery = defineQuery(`
+  *[_type == "article" && slug.current == $slug][0] {
+    ${articleFields}
+  }
+`);
 
-export type ArticleHistoryEntry = {
-  id: number;
-  action: string;
-  previous_status: string | null;
-  new_status: string | null;
-  actor_id: string | null;
-  created_at: string;
-};
+const homepageSettingsQuery = defineQuery(`
+  *[_type == "homepageSettings"] | order(_updatedAt desc)[0] {
+    showFeaturedStory,
+    showTopStories,
+    showSectionSpotlight,
+    showLatestStories,
+    showAbout,
+    showEditorNote,
+    showNewsCrew,
+    "featuredStoryId": featuredStory._ref,
+    noStoriesKicker,
+    noStoriesTitle,
+    noStoriesDescription,
+    featuredLabel,
+    featuredAsideLabel,
+    featuredAsideTitle,
+    featuredAsideDescription,
+    topStoriesLabel,
+    topStoriesTitle,
+    topStoriesDescription,
+    topStoriesCount,
+    sectionSpotlightLabel,
+    sectionSpotlightTitle,
+    sectionSpotlightDescription,
+    newsSectionDescription,
+    sportsSectionDescription,
+    clubsSectionDescription,
+    latestStoriesLabel,
+    latestStoriesTitle,
+    latestStoriesDescription,
+    aboutLabel,
+    aboutTitle,
+    aboutDescription,
+    aboutSideLabel,
+    aboutSideText,
+    editorNoteLabel,
+    editorNoteTitle,
+    editorNoteText,
+    crewLabel,
+    crewTitle,
+    crewDescription,
+    "crewPhoto": crewPhoto.asset->url,
+    "crewPhotoAlt": crewPhoto.alt,
+    "crewPhotoCaption": crewPhoto.caption
+  }
+`);
 
-export type StaffProfileRow = {
-  id: string;
-  display_name: string;
-  role: string;
-  status: string;
-};
+const staffProfilesQuery = defineQuery(`
+  *[_type == "staffProfile" && showOnHomepage == true] | order(displayOrder asc, name asc) {
+    "id": _id,
+    name,
+    "slug": slug.current,
+    role,
+    club,
+    bio,
+    "photo": photo.asset->url,
+    "photoAlt": photo.alt
+  }
+`);
 
-function toArticle(row: ArticleRow): Article {
+const staffProfileBySlugQuery = defineQuery(`
+  *[_type == "staffProfile" && slug.current == $slug][0] {
+    "id": _id,
+    name,
+    "slug": slug.current,
+    role,
+    club,
+    bio,
+    "photo": photo.asset->url,
+    "photoAlt": photo.alt
+  }
+`);
+
+function stringField(value: Record<string, unknown>, key: string, fallback: string) {
+  return typeof value[key] === "string" ? value[key] : fallback;
+}
+
+function booleanField(value: Record<string, unknown>, key: string, fallback: boolean) {
+  return typeof value[key] === "boolean" ? value[key] : fallback;
+}
+
+function toHomepageSettings(value: Record<string, unknown> | null): HomepageSettings {
+  if (!value) return defaultHomepageSettings;
+
   return {
-    id: row.id,
-    slug: row.slug,
-    category: row.category ?? "News",
-    title: row.title ?? "Untitled story",
-    subtitle: row.subtitle ?? undefined,
-    summary: row.summary ?? "",
-    author: row.author ?? "Kau High News Staff",
-    date: row.date ?? "",
-    updatedDate: row.updated_date ?? undefined,
-    readingTime: row.reading_time ?? "1 min read",
-    image: row.image ?? "",
-    tags: row.tags ?? [],
-    content: row.content ?? "",
+    showFeaturedStory: booleanField(value, "showFeaturedStory", defaultHomepageSettings.showFeaturedStory),
+    showTopStories: booleanField(value, "showTopStories", defaultHomepageSettings.showTopStories),
+    showSectionSpotlight: booleanField(value, "showSectionSpotlight", defaultHomepageSettings.showSectionSpotlight),
+    showLatestStories: booleanField(value, "showLatestStories", defaultHomepageSettings.showLatestStories),
+    showAbout: booleanField(value, "showAbout", defaultHomepageSettings.showAbout),
+    showEditorNote: booleanField(value, "showEditorNote", defaultHomepageSettings.showEditorNote),
+    showNewsCrew: booleanField(value, "showNewsCrew", defaultHomepageSettings.showNewsCrew),
+    featuredStoryId: typeof value.featuredStoryId === "string" ? value.featuredStoryId : undefined,
+    noStoriesKicker: stringField(value, "noStoriesKicker", defaultHomepageSettings.noStoriesKicker),
+    noStoriesTitle: stringField(value, "noStoriesTitle", defaultHomepageSettings.noStoriesTitle),
+    noStoriesDescription: stringField(value, "noStoriesDescription", defaultHomepageSettings.noStoriesDescription),
+    featuredLabel: stringField(value, "featuredLabel", defaultHomepageSettings.featuredLabel),
+    featuredAsideLabel: stringField(value, "featuredAsideLabel", defaultHomepageSettings.featuredAsideLabel),
+    featuredAsideTitle: stringField(value, "featuredAsideTitle", defaultHomepageSettings.featuredAsideTitle),
+    featuredAsideDescription: stringField(value, "featuredAsideDescription", defaultHomepageSettings.featuredAsideDescription),
+    topStoriesLabel: stringField(value, "topStoriesLabel", defaultHomepageSettings.topStoriesLabel),
+    topStoriesTitle: stringField(value, "topStoriesTitle", defaultHomepageSettings.topStoriesTitle),
+    topStoriesDescription: stringField(value, "topStoriesDescription", defaultHomepageSettings.topStoriesDescription),
+    topStoriesCount: typeof value.topStoriesCount === "number"
+      ? Math.max(1, Math.min(6, Math.floor(value.topStoriesCount)))
+      : defaultHomepageSettings.topStoriesCount,
+    sectionSpotlightLabel: stringField(value, "sectionSpotlightLabel", defaultHomepageSettings.sectionSpotlightLabel),
+    sectionSpotlightTitle: stringField(value, "sectionSpotlightTitle", defaultHomepageSettings.sectionSpotlightTitle),
+    sectionSpotlightDescription: stringField(value, "sectionSpotlightDescription", defaultHomepageSettings.sectionSpotlightDescription),
+    newsSectionDescription: stringField(value, "newsSectionDescription", defaultHomepageSettings.newsSectionDescription),
+    sportsSectionDescription: stringField(value, "sportsSectionDescription", defaultHomepageSettings.sportsSectionDescription),
+    clubsSectionDescription: stringField(value, "clubsSectionDescription", defaultHomepageSettings.clubsSectionDescription),
+    latestStoriesLabel: stringField(value, "latestStoriesLabel", defaultHomepageSettings.latestStoriesLabel),
+    latestStoriesTitle: stringField(value, "latestStoriesTitle", defaultHomepageSettings.latestStoriesTitle),
+    latestStoriesDescription: stringField(value, "latestStoriesDescription", defaultHomepageSettings.latestStoriesDescription),
+    aboutLabel: stringField(value, "aboutLabel", defaultHomepageSettings.aboutLabel),
+    aboutTitle: stringField(value, "aboutTitle", defaultHomepageSettings.aboutTitle),
+    aboutDescription: stringField(value, "aboutDescription", defaultHomepageSettings.aboutDescription),
+    aboutSideLabel: stringField(value, "aboutSideLabel", defaultHomepageSettings.aboutSideLabel),
+    aboutSideText: stringField(value, "aboutSideText", defaultHomepageSettings.aboutSideText),
+    editorNoteLabel: stringField(value, "editorNoteLabel", defaultHomepageSettings.editorNoteLabel),
+    editorNoteTitle: stringField(value, "editorNoteTitle", defaultHomepageSettings.editorNoteTitle),
+    editorNoteText: stringField(value, "editorNoteText", defaultHomepageSettings.editorNoteText),
+    crewLabel: stringField(value, "crewLabel", defaultHomepageSettings.crewLabel),
+    crewTitle: stringField(value, "crewTitle", defaultHomepageSettings.crewTitle),
+    crewDescription: stringField(value, "crewDescription", defaultHomepageSettings.crewDescription),
+    crewPhoto: typeof value.crewPhoto === "string" ? value.crewPhoto : undefined,
+    crewPhotoAlt: typeof value.crewPhotoAlt === "string" ? value.crewPhotoAlt : undefined,
+    crewPhotoCaption: typeof value.crewPhotoCaption === "string" ? value.crewPhotoCaption : undefined,
   };
 }
 
-function makeSlug(title: string) {
-  return `${title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${Date.now()}`;
+function toStaffProfile(value: Record<string, unknown> | null): StaffProfile | null {
+  if (!value || typeof value.id !== "string" || typeof value.name !== "string" ||
+    typeof value.slug !== "string" || typeof value.role !== "string") {
+    return null;
+  }
+
+  return {
+    id: value.id,
+    name: value.name,
+    slug: value.slug,
+    role: value.role,
+    club: typeof value.club === "string" ? value.club : undefined,
+    bio: typeof value.bio === "string" ? value.bio : undefined,
+    photo: typeof value.photo === "string" ? value.photo : undefined,
+    photoAlt: typeof value.photoAlt === "string" ? value.photoAlt : undefined,
+  };
 }
 
-export async function createArticle(input: CreateArticleInput): Promise<Article> {
-  const date = new Date().toISOString();
-  const slug = makeSlug(input.title);
+function toArticle(value: Record<string, unknown>): Article {
+  const publishedAt = typeof value.date === "string" ? value.date : "";
+  const date = publishedAt
+    ? new Date(publishedAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "";
+  const content = typeof value.content === "string" ? value.content : "";
+  const words = content.trim().split(/\s+/).filter(Boolean).length;
+  const calculatedReadingTime = `${Math.max(1, Math.ceil(words / 200))} min read`;
 
-  if (!hasSupabase) {
-    return {
-      id: Date.now(),
-      slug,
-      category: input.category,
-      title: input.title,
-      subtitle: input.subtitle,
-      summary: input.summary,
-      author: input.authorName,
-      date,
-      readingTime: "1 min read",
-      image: input.heroImage || "",
-      tags: input.tags || [],
-      content: input.content,
-    };
-  }
-
-  const { data, error } = await supabase
-    .from("articles")
-    .insert({
-      slug,
-      category: input.category,
-      title: input.title,
-      subtitle: input.subtitle || null,
-      summary: input.summary,
-      author: input.authorName,
-      author_id: input.authorId,
-      date,
-      updated_date: date,
-      reading_time: "1 min read",
-      image: input.heroImage || "",
-      tags: input.tags || [],
-      content: input.content,
-      status: input.status,
-      is_demo: false,
-    })
-    .select("id, slug, category, title, subtitle, summary, author, date, updated_date, reading_time, image, tags, content, status")
-    .single();
-
-  if (error || !data) {
-    throw new Error(error?.message || "Unable to save the article.");
-  }
-
-  return toArticle(data as ArticleRow);
-}
-
-export async function publishArticle(articleId: number) {
-  if (!hasSupabase) return;
-
-  const { error } = await supabase
-    .from("articles")
-    .update({ status: "published", published_at: new Date().toISOString() })
-    .eq("id", articleId);
-
-  if (error) {
-    throw new Error(error.message || "Unable to publish the article.");
-  }
-}
-
-export async function updateArticleStatus(articleId: number, status: string) {
-  if (!hasSupabase) return;
-
-  const payload: Record<string, string | null> = { status };
-
-  if (status === "published") {
-    payload.published_at = new Date().toISOString();
-  }
-
-  const { error } = await supabase
-    .from("articles")
-    .update(payload)
-    .eq("id", articleId);
-
-  if (error) {
-    throw new Error(error.message || "Unable to update the article status.");
-  }
-}
-
-export async function listDashboardArticles(): Promise<DashboardArticleRow[]> {
-  if (!hasSupabase) {
-    return [];
-  }
-
-  const { data, error } = await supabase
-    .from("articles")
-    .select("id, title, summary, author, category, status, created_at, updated_at, published_at")
-    .order("updated_at", { ascending: false });
-
-  if (error) {
-    throw new Error(error.message || "Unable to load the newsroom dashboard.");
-  }
-
-  return (data ?? []) as DashboardArticleRow[];
-}
-
-export async function getPublishedArticle(slug: string): Promise<Article | null> {
-  if (!hasSupabase) return null;
-
-  const { data, error } = await supabase
-    .from("articles")
-    .select("id, slug, category, title, subtitle, summary, author, date, updated_date, reading_time, image, tags, content, status")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(error.message || "Unable to load the published article.");
-  }
-
-  return data ? toArticle(data as ArticleRow) : null;
+  return {
+    id: typeof value.id === "string" ? value.id : "",
+    slug: typeof value.slug === "string" ? value.slug : "",
+    authorProfileId: typeof value.authorProfileId === "string" ? value.authorProfileId : undefined,
+    authorProfileSlug: typeof value.authorProfileSlug === "string" ? value.authorProfileSlug : undefined,
+    category: typeof value.category === "string" ? value.category : "News",
+    title: typeof value.title === "string" ? value.title : "Untitled story",
+    subtitle: typeof value.subtitle === "string" ? value.subtitle : undefined,
+    summary: typeof value.summary === "string" ? value.summary : "",
+    author: typeof value.author === "string" ? value.author : "Kau High News",
+    date,
+    updatedDate: typeof value.updatedDate === "string" ? value.updatedDate : undefined,
+    readingTime: typeof value.readingTime === "string" ? value.readingTime : calculatedReadingTime,
+    image: typeof value.image === "string" ? value.image : "",
+    imageAlt: typeof value.imageAlt === "string" ? value.imageAlt : undefined,
+    imageCaption: typeof value.imageCaption === "string" ? value.imageCaption : undefined,
+    tags: Array.isArray(value.tags)
+      ? value.tags.filter((tag): tag is string => typeof tag === "string")
+      : [],
+    content,
+  };
 }
 
 export async function listPublishedArticles(): Promise<Article[]> {
-  if (!hasSupabase) return [];
-
-  const { data, error } = await supabase
-    .from("articles")
-    .select("id, slug, category, title, subtitle, summary, author, date, updated_date, reading_time, image, tags, content, status")
-    .eq("status", "published")
-    .order("published_at", { ascending: false });
-
-  if (error) {
-    throw new Error(error.message || "Unable to load published articles.");
-  }
-
-  return (data ?? []).map((row) => toArticle(row as ArticleRow));
+  if (!client) return [];
+  const articles = await client.fetch<Record<string, unknown>[]>(
+    publishedArticlesQuery,
+    {},
+    { next: { revalidate: publishedContentRevalidateSeconds } },
+  );
+  return articles.map(toArticle);
 }
 
-export async function listStaffProfiles(): Promise<StaffProfileRow[]> {
-  if (!hasSupabase) return [];
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, display_name, role, status")
-    .order("display_name", { ascending: true });
-
-  if (error) {
-    throw new Error(error.message || "Unable to load staff profiles.");
-  }
-
-  return (data ?? []) as StaffProfileRow[];
+export async function getPublishedArticle(slug: string): Promise<Article | null> {
+  if (!client) return null;
+  const article = await client.fetch<Record<string, unknown> | null>(
+    publishedArticleBySlugQuery,
+    { slug },
+    { next: { revalidate: publishedContentRevalidateSeconds } },
+  );
+  return article ? toArticle(article) : null;
 }
 
-export async function updateStaffProfile(
-  profileId: string,
-  updates: { role?: string; status?: string }
-) {
-  if (!hasSupabase) return;
-
-  const { error } = await supabase
-    .from("profiles")
-    .update(updates)
-    .eq("id", profileId);
-
-  if (error) {
-    throw new Error(error.message || "Unable to update the staff profile.");
-  }
+export async function getHomepageSettings(): Promise<HomepageSettings> {
+  if (!client) return defaultHomepageSettings;
+  const settings = await client.fetch<Record<string, unknown> | null>(
+    homepageSettingsQuery,
+    {},
+    { next: { revalidate: publishedContentRevalidateSeconds } },
+  );
+  return toHomepageSettings(settings);
 }
 
-export async function listEditorialNotes(articleId: number): Promise<EditorialNote[]> {
-  if (!hasSupabase) return [];
-
-  const { data, error } = await supabase
-    .from("article_editorial_notes")
-    .select("id, note, author_id, created_at")
-    .eq("article_id", articleId)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw new Error(error.message || "Unable to load editorial notes.");
-  }
-
-  return (data ?? []) as EditorialNote[];
-}
-
-export async function addEditorialNote(articleId: number, authorId: string, note: string) {
-  if (!hasSupabase) return;
-
-  const { error } = await supabase.from("article_editorial_notes").insert({
-    article_id: articleId,
-    author_id: authorId,
-    note: note.trim(),
+export async function listHomepageStaffProfiles(): Promise<StaffProfile[]> {
+  if (!client) return [];
+  const profiles = await client.fetch<Record<string, unknown>[]>(staffProfilesQuery, {}, {
+    next: { revalidate: publishedContentRevalidateSeconds },
   });
-
-  if (error) {
-    throw new Error(error.message || "Unable to save the editorial note.");
-  }
+  return profiles.map(toStaffProfile).filter((profile): profile is StaffProfile => profile !== null);
 }
 
-export async function listArticleHistory(articleId: number): Promise<ArticleHistoryEntry[]> {
-  if (!hasSupabase) return [];
-
-  const { data, error } = await supabase
-    .from("article_history")
-    .select("id, action, previous_status, new_status, actor_id, created_at")
-    .eq("article_id", articleId)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw new Error(error.message || "Unable to load article history.");
-  }
-
-  return (data ?? []) as ArticleHistoryEntry[];
+export async function getStaffProfile(slug: string): Promise<StaffProfile | null> {
+  if (!client) return null;
+  const profile = await client.fetch<Record<string, unknown> | null>(
+    staffProfileBySlugQuery,
+    { slug },
+    { next: { revalidate: publishedContentRevalidateSeconds } },
+  );
+  return toStaffProfile(profile);
 }

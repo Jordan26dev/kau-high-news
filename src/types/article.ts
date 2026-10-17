@@ -1,6 +1,8 @@
 export type Article = {
-  id: number;
+  id: string | number;
   slug: string;
+  authorProfileId?: string;
+  authorProfileSlug?: string;
   category: string;
   title: string;
   subtitle?: string;
@@ -10,6 +12,8 @@ export type Article = {
   updatedDate?: string;
   readingTime: string;
   image: string;
+  imageAlt?: string;
+  imageCaption?: string;
   tags: string[];
   content: string;
   seoTitle?: string;
