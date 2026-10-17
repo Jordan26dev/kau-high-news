@@ -6,6 +6,7 @@ export type HomepageSettings = {
   showAbout: boolean;
   showEditorNote: boolean;
   showNewsCrew: boolean;
+  showContacts: boolean;
   featuredStoryId?: string;
   noStoriesKicker: string;
   noStoriesTitle: string;
@@ -41,6 +42,18 @@ export type HomepageSettings = {
   crewPhoto?: string;
   crewPhotoAlt?: string;
   crewPhotoCaption?: string;
+  contactsTitle: string;
+  contactsDescription: string;
+  contacts: NewsroomContact[];
+};
+
+export type NewsroomContact = {
+  key: string;
+  name: string;
+  purpose?: string;
+  email?: string;
+  website?: string;
+  websiteLabel?: string;
 };
 
 export type StaffProfile = {
@@ -62,6 +75,7 @@ export const defaultHomepageSettings: HomepageSettings = {
   showAbout: true,
   showEditorNote: true,
   showNewsCrew: true,
+  showContacts: false,
   noStoriesKicker: "The front page",
   noStoriesTitle: "The next story starts here.",
   noStoriesDescription: "Check back soon for reporting from Kau High.",
@@ -93,4 +107,7 @@ export const defaultHomepageSettings: HomepageSettings = {
   crewLabel: "Meet the news crew",
   crewTitle: "The voices behind Kau High News",
   crewDescription: "Meet the students and staff who bring our stories to life.",
+  contactsTitle: "Contact the newsroom",
+  contactsDescription: "Send a news tip, ask a question, or reach the Kau High News team.",
+  contacts: [],
 };

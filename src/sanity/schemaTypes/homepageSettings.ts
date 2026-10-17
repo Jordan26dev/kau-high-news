@@ -1,4 +1,4 @@
-import { defineField, defineType } from "sanity";
+import { defineArrayMember, defineField, defineType } from "sanity";
 
 export const homepageSettings = defineType({
   name: "homepageSettings",
@@ -10,6 +10,7 @@ export const homepageSettings = defineType({
     { name: "stories", title: "Story lists" },
     { name: "about", title: "About the paper" },
     { name: "crew", title: "Meet the news crew" },
+    { name: "contact", title: "Newsroom contacts" },
   ],
   fields: [
     defineField({
@@ -61,6 +62,14 @@ export const homepageSettings = defineType({
       type: "boolean",
       group: "sections",
       initialValue: true,
+    }),
+    defineField({
+      name: "showContacts",
+      title: "Show newsroom contacts",
+      type: "boolean",
+      group: "sections",
+      initialValue: false,
+      description: "Show the public contact list on the homepage.",
     }),
     defineField({
       name: "noStoriesKicker",
@@ -311,6 +320,82 @@ export const homepageSettings = defineType({
           name: "caption",
           title: "Photo caption / credit",
           type: "string",
+        }),
+      ],
+    }),
+    defineField({
+      name: "contactsTitle",
+      title: "Contact section heading",
+      type: "string",
+      group: "contact",
+      initialValue: "Contact the newsroom",
+      validation: (rule) => rule.required().max(100),
+    }),
+    defineField({
+      name: "contactsDescription",
+      title: "Contact section introduction",
+      type: "text",
+      rows: 2,
+      group: "contact",
+      initialValue: "Send a news tip, ask a question, or reach the Kau High News team.",
+      validation: (rule) => rule.max(300),
+    }),
+    defineField({
+      name: "contacts",
+      title: "Public contact list",
+      type: "array",
+      group: "contact",
+      description: "Only add email addresses and links approved for public use by the school.",
+      of: [
+        defineArrayMember({
+          name: "contact",
+          title: "Contact",
+          type: "object",
+          fields: [
+            defineField({
+              name: "name",
+              title: "Contact name or team",
+              type: "string",
+              description: "For example, News tips, Corrections, or Faculty adviser.",
+              validation: (rule) => rule.required().max(80),
+            }),
+            defineField({
+              name: "purpose",
+              title: "What this contact is for",
+              type: "string",
+              validation: (rule) => rule.max(160),
+            }),
+            defineField({
+              name: "email",
+              title: "Public email address",
+              type: "string",
+              validation: (rule) =>
+                rule
+                  .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, { name: "email address" })
+                  .warning("Enter a valid public email address."),
+            }),
+            defineField({
+              name: "website",
+              title: "Optional website",
+              type: "url",
+              validation: (rule) =>
+                rule.uri({ scheme: ["http", "https"] }).warning("Use a public http or https website URL."),
+            }),
+            defineField({
+              name: "websiteLabel",
+              title: "Website link text",
+              type: "string",
+              initialValue: "Visit website",
+              hidden: ({ parent }) => !parent?.website,
+              validation: (rule) => rule.max(50),
+            }),
+          ],
+          preview: {
+            select: {
+              title: "name",
+              subtitle: "email",
+            },
+          },
         }),
       ],
     }),

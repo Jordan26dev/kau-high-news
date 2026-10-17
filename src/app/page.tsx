@@ -3,6 +3,7 @@ import CategorySpotlight from "@/components/CategorySpotlight";
 import EditorNote from "@/components/EditorNote";
 import FeaturedArticle from "@/components/FeaturedArticle";
 import NewsCrewSection from "@/components/NewsCrewSection";
+import NewsroomContactsSection from "@/components/NewsroomContactsSection";
 import PublishedArticleBrowser from "@/components/PublishedArticleBrowser";
 import TopStories from "@/components/TopStories";
 import {
@@ -103,6 +104,13 @@ export default async function Home() {
           label={settings.editorNoteLabel}
           title={settings.editorNoteTitle}
           text={settings.editorNoteText}
+        />
+      ) : null}
+      {settings.showContacts ? (
+        <NewsroomContactsSection
+          contactsTitle={settings.contactsTitle}
+          contactsDescription={settings.contactsDescription}
+          contacts={settings.contacts}
         />
       ) : null}
     </main>

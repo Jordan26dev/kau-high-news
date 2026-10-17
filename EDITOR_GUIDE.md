@@ -46,6 +46,15 @@ Published stories appear on the front page, section pages, and their own story p
 
 The existing layout and style are intentionally kept consistent. Editors can change the text, photos, featured story, and visibility of the built-in homepage sections. Creating a new kind of section or changing the page layout requires a code change and redeployment.
 
+## Add public newsroom contacts
+
+1. Open **Homepage & site settings** and select **Newsroom contacts**.
+2. Add a contact with a short name such as **News tips**, **Corrections**, or **Faculty adviser**. Add a short purpose, a public email, and/or a public website URL.
+3. Add more entries as needed. Reorder the contacts by dragging them in the list.
+4. In **Homepage sections**, turn on **Show newsroom contacts**, then publish the settings document.
+
+The contact section appears near the bottom of the homepage when enabled. Only use contact details explicitly approved for public use by the school. Prefer a shared newsroom or school address; do not publish a student's personal email, phone number, or other private contact information.
+
 ## Manage the News Crew
 
 1. Open **News crew** and create a **News crew profile** for each person.

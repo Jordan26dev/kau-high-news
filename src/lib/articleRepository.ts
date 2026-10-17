@@ -61,6 +61,7 @@ const homepageSettingsQuery = defineQuery(`
     showAbout,
     showEditorNote,
     showNewsCrew,
+    showContacts,
     "featuredStoryId": featuredStory._ref,
     noStoriesKicker,
     noStoriesTitle,
@@ -95,7 +96,17 @@ const homepageSettingsQuery = defineQuery(`
     crewDescription,
     "crewPhoto": crewPhoto.asset->url,
     "crewPhotoAlt": crewPhoto.alt,
-    "crewPhotoCaption": crewPhoto.caption
+    "crewPhotoCaption": crewPhoto.caption,
+    contactsTitle,
+    contactsDescription,
+    contacts[] {
+      _key,
+      name,
+      purpose,
+      email,
+      website,
+      websiteLabel
+    }
   }
 `);
 
@@ -133,6 +144,37 @@ function booleanField(value: Record<string, unknown>, key: string, fallback: boo
   return typeof value[key] === "boolean" ? value[key] : fallback;
 }
 
+function toNewsroomContacts(value: unknown) {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item): HomepageSettings["contacts"][number][] => {
+    if (typeof item !== "object" || item === null) return [];
+    const contact = item as Record<string, unknown>;
+    if (typeof contact.name !== "string" || !contact.name.trim()) return [];
+
+    const email =
+      typeof contact.email === "string" &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)
+        ? contact.email
+        : undefined;
+    const website =
+      typeof contact.website === "string" &&
+      /^https?:\/\//i.test(contact.website)
+        ? contact.website
+        : undefined;
+
+    return [{
+      key: typeof contact._key === "string" ? contact._key : contact.name,
+      name: contact.name,
+      purpose: typeof contact.purpose === "string" ? contact.purpose : undefined,
+      email,
+      website,
+      websiteLabel:
+        typeof contact.websiteLabel === "string" ? contact.websiteLabel : undefined,
+    }];
+  });
+}
+
 function toHomepageSettings(value: Record<string, unknown> | null): HomepageSettings {
   if (!value) return defaultHomepageSettings;
 
@@ -144,6 +186,7 @@ function toHomepageSettings(value: Record<string, unknown> | null): HomepageSett
     showAbout: booleanField(value, "showAbout", defaultHomepageSettings.showAbout),
     showEditorNote: booleanField(value, "showEditorNote", defaultHomepageSettings.showEditorNote),
     showNewsCrew: booleanField(value, "showNewsCrew", defaultHomepageSettings.showNewsCrew),
+    showContacts: booleanField(value, "showContacts", defaultHomepageSettings.showContacts),
     featuredStoryId: typeof value.featuredStoryId === "string" ? value.featuredStoryId : undefined,
     noStoriesKicker: stringField(value, "noStoriesKicker", defaultHomepageSettings.noStoriesKicker),
     noStoriesTitle: stringField(value, "noStoriesTitle", defaultHomepageSettings.noStoriesTitle),
@@ -181,6 +224,9 @@ function toHomepageSettings(value: Record<string, unknown> | null): HomepageSett
     crewPhoto: typeof value.crewPhoto === "string" ? value.crewPhoto : undefined,
     crewPhotoAlt: typeof value.crewPhotoAlt === "string" ? value.crewPhotoAlt : undefined,
     crewPhotoCaption: typeof value.crewPhotoCaption === "string" ? value.crewPhotoCaption : undefined,
+    contactsTitle: stringField(value, "contactsTitle", defaultHomepageSettings.contactsTitle),
+    contactsDescription: stringField(value, "contactsDescription", defaultHomepageSettings.contactsDescription),
+    contacts: toNewsroomContacts(value.contacts),
   };
 }
 
