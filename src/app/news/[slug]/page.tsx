@@ -92,7 +92,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             </div>
           ) : null}
 
-          <ArticleBody content={article.content} />
+          <ArticleBody content={article.content} storyBlocks={article.storyBlocks} />
         </div>
       </article>
 

@@ -4,6 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
+import { getHomepageSettings } from "@/lib/articleRepository";
+import { defaultHomepageSettings } from "@/types/newsroom";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,19 +23,29 @@ export const metadata: Metadata = {
   description: "A modern student newspaper for Kau High School.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let siteLogo = defaultHomepageSettings.siteLogo;
+  let siteLogoAlt = defaultHomepageSettings.siteLogoAlt;
+  try {
+    const settings = await getHomepageSettings();
+    siteLogo = settings.siteLogo;
+    siteLogoAlt = settings.siteLogoAlt;
+  } catch (error) {
+    console.error("Unable to load site logo from Sanity.", error);
+  }
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex min-h-screen flex-col">
-        <PageTransition />
-        <Navbar />
+        <PageTransition logo={siteLogo} logoAlt={siteLogoAlt} />
+        <Navbar logo={siteLogo} logoAlt={siteLogoAlt} />
         {children}
         <Footer />
       </body>

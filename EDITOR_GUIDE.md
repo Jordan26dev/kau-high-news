@@ -1,6 +1,6 @@
 # Kau High News editor setup
 
-The site keeps its current newspaper design. Sanity provides the sign-in, story editor, and image library; Next.js displays the published content. You don't need a Supabase account, database query, or service key to publish new stories.
+The site keeps its current newspaper design. Sanity provides the sign-in, story editor, homepage settings, and image library; Next.js displays the published content.
 
 ## One-time setup
 
@@ -30,8 +30,8 @@ No Sanity API write token belongs in `.env.local` or browser code. Sanity Studio
 1. Open `/studio` and sign in.
 2. Choose **Story** → **Create**.
 3. Enter the headline, URL slug (generate it from the headline), section, short summary, and byline.
-4. Add a story photo if you have one. Fill out the photo description for accessibility and add a caption/credit when appropriate.
-5. Write the story in the **Story** field. Use a blank line between paragraphs.
+4. Add a headline/hero photo if you have one. Fill out the photo description for accessibility and add a caption/credit when appropriate. WebP images are recommended; the editor shows a warning for other formats.
+5. Write the story in **Story text and inline photos**. Add paragraphs and use the plus button to place photos between paragraphs. Each inline photo needs a description; add a caption and credit when appropriate. Existing stories using the older text field continue to display.
 6. Select **Publish** when ready. To keep it private, leave it as a draft.
 
 Published stories appear on the front page, section pages, and their own story page. The homepage usually refreshes published content within about 10 seconds. Drafts stay private in Sanity. Edit or unpublish stories from the same studio.
@@ -45,6 +45,14 @@ Published stories appear on the front page, section pages, and their own story p
 5. Click **Publish** on the settings document. Published changes appear on the site within about 10 seconds. Saving as a draft does not change the public site.
 
 The existing layout and style are intentionally kept consistent. Editors can change the text, photos, featured story, and visibility of the built-in homepage sections. Creating a new kind of section or changing the page layout requires a code change and redeployment.
+
+## Change the yearly logo
+
+1. Open **Homepage & site settings** in the Studio.
+2. Open **Masthead & logo** and upload the current school-year logo to **Site logo**.
+3. Add a short logo description for accessibility, then publish the settings document.
+
+The uploaded logo appears in the site masthead and page transition. If no logo is set, the site uses its built-in text masthead and seal. WebP is recommended; the editor shows a warning for other formats.
 
 ## Add public newsroom contacts
 
@@ -70,4 +78,4 @@ The Studio has a **View public site** button in its top bar. It opens the newspa
 
 ## Existing Supabase information
 
-This change does **not** delete Supabase users, stories, settings, or uploaded files. The site no longer uses Supabase for its publishing workflow, so old records won't automatically show up in Sanity. Keep the Supabase project and its data until you have checked the new editor and copied/exported anything you still need. Do not delete the old accounts or database as part of initial Sanity setup.
+The website's current publishing workflow does not use Supabase. Existing Supabase users and data are not changed or deleted by this project update.

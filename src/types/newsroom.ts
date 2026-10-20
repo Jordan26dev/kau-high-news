@@ -1,4 +1,6 @@
 export type HomepageSettings = {
+  siteLogo?: string;
+  siteLogoAlt?: string;
   showFeaturedStory: boolean;
   showTopStories: boolean;
   showSectionSpotlight: boolean;
@@ -68,6 +70,8 @@ export type StaffProfile = {
 };
 
 export const defaultHomepageSettings: HomepageSettings = {
+  siteLogo: undefined,
+  siteLogoAlt: undefined,
   showFeaturedStory: true,
   showTopStories: true,
   showSectionSpotlight: true,

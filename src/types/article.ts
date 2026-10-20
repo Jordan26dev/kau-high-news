@@ -1,3 +1,5 @@
+import type { PortableTextBlock } from "@portabletext/react";
+
 export type Article = {
   id: string | number;
   slug: string;
@@ -16,6 +18,7 @@ export type Article = {
   imageCaption?: string;
   tags: string[];
   content: string;
+  storyBlocks?: PortableTextBlock[];
   seoTitle?: string;
   seoDescription?: string;
 };

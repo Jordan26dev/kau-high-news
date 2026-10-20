@@ -1,5 +1,7 @@
 # Kau High News - Platform Verification Checklist
 
+> **Historical checklist:** The Supabase database, authentication, and dashboard checks below are for an earlier architecture and do not apply to the current Sanity-based site. For current setup and publishing checks, see [EDITOR_GUIDE.md](./EDITOR_GUIDE.md).
+
 ## ✅ Pre-Launch Verification
 
 This checklist verifies that all platform components are working correctly before considering the project complete.

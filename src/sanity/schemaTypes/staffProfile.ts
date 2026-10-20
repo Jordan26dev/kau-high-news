@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { webpImageValidation } from "./imageValidation";
 
 export const staffProfile = defineType({
   name: "staffProfile",
@@ -50,6 +51,7 @@ export const staffProfile = defineType({
       title: "Profile photo",
       type: "image",
       options: { hotspot: true },
+      validation: webpImageValidation,
       fields: [
         defineField({
           name: "alt",

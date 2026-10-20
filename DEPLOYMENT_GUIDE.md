@@ -1,5 +1,7 @@
 # Kau High News - Deployment & Launch Guide
 
+> **Historical document:** The Supabase-based architecture described below is not the current application. The current site uses Sanity for publishing and does not require Supabase authentication or database setup. Follow [EDITOR_GUIDE.md](./EDITOR_GUIDE.md) for current setup instructions.
+
 **Status:** 📊 75% Complete | Production-Ready for Core Features
 
 **Date:** September 1, 2026

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-export default function PageTransition() {
+export default function PageTransition({ logo, logoAlt }: { logo?: string; logoAlt?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const previousPathname = useRef(pathname);
@@ -82,11 +82,12 @@ export default function PageTransition() {
       <div className="page-transition-content">
         <p className="page-transition-wordmark">KAU HIGH</p>
         <Image
-          src="/kau-logo.png"
-          alt="Kau High School seal"
+          src={logo || "/kau-logo.png"}
+          alt={logo ? logoAlt || "Kau High News" : "Kau High School seal"}
           width={220}
           height={220}
-          className="page-transition-seal"
+          className={`page-transition-seal ${logo ? "object-contain" : ""}`}
+          unoptimized={Boolean(logo)}
           priority
         />
         <p className="page-transition-wordmark">NEWS</p>

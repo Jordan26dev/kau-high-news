@@ -1,5 +1,5 @@
-# Supabase database history
+# Database migrations
 
-The migrations in `migrations/001` through `migrations/004` describe the Supabase-backed staff and publishing setup used by earlier versions of this project. They are retained as historical records and are not used by the current Sanity-based publishing site.
+The current website uses Sanity for public stories, homepage settings, newsroom profiles, and images. It does not require Supabase for publishing or staff sign-in.
 
-Switching to Sanity does not delete or modify the Supabase project, accounts, database rows, or storage objects. Keep the Supabase project until you've checked the Sanity editor and copied/exported any content you want to retain. See the repository-level [Editor Setup Guide](../EDITOR_GUIDE.md).
+The SQL files in `migrations/` are retained historical project files and are not required for the current Sanity workflow. Do not apply them as part of routine site setup.

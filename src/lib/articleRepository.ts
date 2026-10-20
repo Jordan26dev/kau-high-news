@@ -1,4 +1,5 @@
 import { createClient, defineQuery } from "next-sanity";
+import type { PortableTextBlock } from "@portabletext/react";
 
 import type { Article } from "@/types/article";
 import {
@@ -37,7 +38,14 @@ const articleFields = `
   "imageAlt": heroImage.alt,
   "imageCaption": heroImage.caption,
   tags,
-  content
+  content,
+  "storyBlocks": storyBlocks[]{
+    ...,
+    _type == "image" => {
+      ...,
+      "assetUrl": asset->url
+    }
+  }
 `;
 
 const publishedArticlesQuery = defineQuery(`
@@ -54,6 +62,8 @@ const publishedArticleBySlugQuery = defineQuery(`
 
 const homepageSettingsQuery = defineQuery(`
   *[_type == "homepageSettings"] | order(_updatedAt desc)[0] {
+    "siteLogo": siteLogo.asset->url,
+    "siteLogoAlt": siteLogo.alt,
     showFeaturedStory,
     showTopStories,
     showSectionSpotlight,
@@ -179,6 +189,8 @@ function toHomepageSettings(value: Record<string, unknown> | null): HomepageSett
   if (!value) return defaultHomepageSettings;
 
   return {
+    siteLogo: typeof value.siteLogo === "string" ? value.siteLogo : undefined,
+    siteLogoAlt: typeof value.siteLogoAlt === "string" ? value.siteLogoAlt : undefined,
     showFeaturedStory: booleanField(value, "showFeaturedStory", defaultHomepageSettings.showFeaturedStory),
     showTopStories: booleanField(value, "showTopStories", defaultHomepageSettings.showTopStories),
     showSectionSpotlight: booleanField(value, "showSectionSpotlight", defaultHomepageSettings.showSectionSpotlight),
@@ -258,7 +270,17 @@ function toArticle(value: Record<string, unknown>): Article {
       })
     : "";
   const content = typeof value.content === "string" ? value.content : "";
-  const words = content.trim().split(/\s+/).filter(Boolean).length;
+  const storyBlocks = Array.isArray(value.storyBlocks)
+    ? value.storyBlocks as PortableTextBlock[]
+    : undefined;
+  const storyText = storyBlocks
+    ? storyBlocks
+        .filter((block) => block._type === "block")
+        .flatMap((block) => block.children ?? [])
+        .map((child) => "text" in child && typeof child.text === "string" ? child.text : "")
+        .join(" ")
+    : content;
+  const words = storyText.trim().split(/\s+/).filter(Boolean).length;
   const calculatedReadingTime = `${Math.max(1, Math.ceil(words / 200))} min read`;
 
   return {
@@ -281,6 +303,7 @@ function toArticle(value: Record<string, unknown>): Article {
       ? value.tags.filter((tag): tag is string => typeof tag === "string")
       : [],
     content,
+    storyBlocks,
   };
 }
 

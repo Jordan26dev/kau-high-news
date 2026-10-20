@@ -20,7 +20,7 @@ export default function Footer() {
           </Link>
           <div className="flex flex-col gap-1 border-l-2 border-[#d9c7ae] pl-4">
             <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-slate-500">
-              For editors
+              For staff
             </span>
             <Link
               href="/studio"

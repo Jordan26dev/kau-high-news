@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,7 +11,7 @@ const navItems = [
   { label: "Clubs", href: "/categories/Clubs" },
 ];
 
-export default function Navbar() {
+export default function Navbar({ logo, logoAlt }: { logo?: string; logoAlt?: string }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
   if (pathname.startsWith("/studio")) return null;
@@ -25,9 +26,21 @@ export default function Navbar() {
         </div>
 
         <Link href="/" className={`block text-center ${isHome ? "site-header-title-home" : "py-5"}`}>
-          <span className="masthead-title masthead-gradient block font-serif font-black uppercase">
-            KAU HIGH NEWS
-          </span>
+          {logo ? (
+            <Image
+              src={logo}
+              alt={logoAlt || "Kau High News"}
+              width={800}
+              height={200}
+              className="mx-auto max-h-36 w-auto max-w-full object-contain py-2"
+              unoptimized
+              priority
+            />
+          ) : (
+            <span className="masthead-title masthead-gradient block font-serif font-black uppercase">
+              KAU HIGH NEWS
+            </span>
+          )}
         </Link>
 
         <nav className="border-t-2 border-b border-[#5b1212] py-2">

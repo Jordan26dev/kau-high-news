@@ -1,4 +1,5 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import { webpImageValidation } from "./imageValidation";
 
 export const homepageSettings = defineType({
   name: "homepageSettings",
@@ -6,6 +7,7 @@ export const homepageSettings = defineType({
   type: "document",
   groups: [
     { name: "sections", title: "Homepage sections", default: true },
+    { name: "branding", title: "Masthead & logo" },
     { name: "featured", title: "Featured story" },
     { name: "stories", title: "Story lists" },
     { name: "about", title: "About the paper" },
@@ -13,6 +15,24 @@ export const homepageSettings = defineType({
     { name: "contact", title: "Newsroom contacts" },
   ],
   fields: [
+    defineField({
+      name: "siteLogo",
+      title: "Site logo",
+      type: "image",
+      options: { hotspot: true },
+      group: "branding",
+      validation: webpImageValidation,
+      description: "Optional school-year logo. Leave empty to use the text masthead and the built-in transition seal.",
+      fields: [
+        defineField({
+          name: "alt",
+          title: "Logo description",
+          type: "string",
+          initialValue: "Kau High News",
+          validation: (rule) => rule.required().max(120),
+        }),
+      ],
+    }),
     defineField({
       name: "showFeaturedStory",
       title: "Show featured story on homepage",
@@ -308,6 +328,7 @@ export const homepageSettings = defineType({
       type: "image",
       options: { hotspot: true },
       group: "crew",
+      validation: webpImageValidation,
       fields: [
         defineField({
           name: "alt",
